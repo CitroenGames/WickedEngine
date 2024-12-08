@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 project(Template_Windows)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.h")
 
 set(LIB_DXCOMPILER "dxcompiler.dll")

@@ -43,11 +43,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-	application.Initialize();
-	wi::initializer::InitializeComponentsImmediate();
-
 	wi::RenderPath3D myGame;
 	application.ActivatePath(&myGame);
+
+	application.Initialize();
+	wi::initializer::InitializeComponentsImmediate();
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TEMPLATEWINDOWS));
 
