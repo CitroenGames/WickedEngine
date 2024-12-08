@@ -11,6 +11,7 @@
 #include "wiPlatform.h"
 #include "wiHelper.h"
 #include "wiGUI.h"
+#include "log.h"
 
 #include <mutex>
 #include <deque>
@@ -80,10 +81,12 @@ namespace wi::backlog
 		enabled = !enabled;
 		was_ever_enabled = true;
 	}
+
 	void Scroll(float dir)
 	{
 		scroll += dir;
 	}
+
 	void Update(const wi::Canvas& canvas, float dt)
 	{
 		if (!locked)
@@ -200,6 +203,7 @@ namespace wi::backlog
 		toggleButton.SetPos(XMFLOAT2(canvas.GetLogicalWidth() - toggleButton.GetSize().x - 20, 20 + pos));
 		toggleButton.Update(canvas, dt);
 	}
+
 	void Draw(
 		const wi::Canvas& canvas,
 		CommandList cmd,
@@ -342,6 +346,19 @@ namespace wi::backlog
 		if (logLevel > level)
 		{
 			return;
+		}
+
+		if (level == LogLevel::Default)
+		{
+			LOG_INFO(input);
+		}
+		if(level == LogLevel::Warning)
+		{
+			LOG_WARN(input);
+		}
+		if (level == LogLevel::Error)
+		{
+			LOG_ERROR(input);
 		}
 
 		// This is explicitly scoped for scoped_lock!

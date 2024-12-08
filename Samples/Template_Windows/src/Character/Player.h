@@ -8,13 +8,13 @@ using namespace DirectX::SimpleMath;
 
 class Player : public CharacterBody
 {
-    static const constexpr float HEIGHT = 1.6;
-    static const constexpr float SPEED = 1.0;
-    static const constexpr float FLYSPEED = 100.0;
+    static const constexpr float HEIGHT = 1.6f;
+    static const constexpr float SPEED = 1.0f;
+    static const constexpr float FLYSPEED = 100.0f;
 
     wi::ecs::Entity mEntity = wi::ecs::INVALID_ENTITY;
     Vector3 cam_move;
-    Vector3 mGravity{0, -9.8, 0};
+    Vector3 mGravity{0, -9.8f, 0};
     Vector3 mCurrentVelocity{0, 0, 0};
 
     bool pointer_captured = false;

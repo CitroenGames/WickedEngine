@@ -18,6 +18,9 @@ else()
 	message(STATUS "Building WickedEngine as a static library")
 endif()
 
+include("Cmake/Utils.cmake")
+add_subdirectory(3rdparty)
+
 if (WIN32)
 	# TODO: Choose whether to use SDL2 on windows as well
 	set(TARGET_NAME WickedEngine_Windows)
@@ -64,13 +67,15 @@ file(GLOB HEADER_FILES CONFIGURE_DEPENDS *.h)
 file(GLOB SOURCE_FILES CONFIGURE_DEPENDS *.cpp)
 list(REMOVE_ITEM SOURCE_FILES offlineshadercompiler.cpp)
 
+group_sources(SOURCE_FILES HEADER_FILES)
+
 add_library(${TARGET_NAME} ${WICKED_LIBRARY_TYPE}
 	${SOURCE_FILES}
 	${HEADER_FILES}
 )
 
 if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /GS /Oi")
 endif()
 
 add_library(WickedEngine ALIAS ${TARGET_NAME})
@@ -85,6 +90,7 @@ set(WICKEDENGINE_STATIC_LIBRARIES
 	Jolt
 	LUA
 	Utility
+	spdlog
 )
 
 if (WIN32)

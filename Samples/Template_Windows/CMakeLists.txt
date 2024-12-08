@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 )
 
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /GS /Oi")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

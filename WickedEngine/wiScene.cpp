@@ -1167,6 +1167,7 @@ namespace wi::scene
 		collider_count_gpu = collider_allocator_gpu.load();
 		collider_bvh.Build(aabb_colliders_cpu, collider_count_cpu);
 	}
+
 	Entity Scene::Instantiate(Scene& prefab, bool attached)
 	{
 		wi::Timer timer;
@@ -1175,24 +1176,23 @@ namespace wi::scene
 		//	Note: we directly use componentLibrary.Serialize instead of serializing whole scene
 		//	Because prefab scene's resources are already in memory, and we don't need to handle them
 		//	Also other generic scene serialization can be skipped
-		Scene tmp;
-		wi::Archive archive;
-		EntitySerializer seri;
+		auto tmp = std::make_unique<Scene>();
+		auto seri = std::make_unique<EntitySerializer>();
 
 		if (!prefab.optimized_instatiation_data.IsReadMode())
 		{
 			// Create optimized data
 			prefab.locker.lock();
 			prefab.optimized_instatiation_data.SetReadModeAndResetPos(false);
-			prefab.componentLibrary.Serialize(prefab.optimized_instatiation_data, seri);
+			prefab.componentLibrary.Serialize(prefab.optimized_instatiation_data, *seri);
 			prefab.optimized_instatiation_data.SetReadModeAndResetPos(true);
 			prefab.locker.unlock();
 		}
 
-		archive = wi::Archive(prefab.optimized_instatiation_data.GetData(), prefab.optimized_instatiation_data.GetSize());
+		auto archive = std::make_unique<wi::Archive>(prefab.optimized_instatiation_data.GetData(), prefab.optimized_instatiation_data.GetSize());
 
-		archive.SetReadModeAndResetPos(true);
-		tmp.componentLibrary.Serialize(archive, seri);
+		archive->SetReadModeAndResetPos(true);
+		tmp->componentLibrary.Serialize(*archive, *seri);
 
 		Entity rootEntity = INVALID_ENTITY;
 
@@ -1200,25 +1200,25 @@ namespace wi::scene
 		{
 			// Create root entity
 			rootEntity = CreateEntity();
-			tmp.transforms.Create(rootEntity);
-			tmp.layers.Create(rootEntity).layerMask = ~0;
+			tmp->transforms.Create(rootEntity);
+			tmp->layers.Create(rootEntity).layerMask = ~0;
 
 			// Parent all unparented transforms to new root entity
-			for (size_t i = 0; i < tmp.transforms.GetCount(); ++i)
+			for (size_t i = 0; i < tmp->transforms.GetCount(); ++i)
 			{
-				Entity entity = tmp.transforms.GetEntity(i);
-				if (entity != rootEntity && !tmp.hierarchy.Contains(entity))
+				Entity entity = tmp->transforms.GetEntity(i);
+				if (entity != rootEntity && !tmp->hierarchy.Contains(entity))
 				{
-					tmp.Component_Attach(entity, rootEntity);
+					tmp->Component_Attach(entity, rootEntity);
 				}
 			}
 
-			tmp.RunHierarchyUpdateSystem(seri.ctx);
+			tmp->RunHierarchyUpdateSystem(seri->ctx);
 		}
 
-		wi::jobsystem::Wait(seri.ctx); // wait for completion of component serializations background threads here
+		wi::jobsystem::Wait(seri->ctx); // wait for completion of component serializations background threads here
 
-		Merge(tmp);
+		Merge(*tmp);
 
 		char text[64] = {};
 		snprintf(text, arraysize(text), "Scene::Instantiate took %.2f ms", timer.elapsed_milliseconds());
@@ -1226,6 +1226,7 @@ namespace wi::scene
 
 		return rootEntity;
 	}
+
 	void Scene::FindAllEntities(wi::unordered_set<wi::ecs::Entity>& entities) const
 	{
 		for (auto& entry : componentLibrary.entries)

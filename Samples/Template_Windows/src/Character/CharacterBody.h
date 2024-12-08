@@ -9,11 +9,11 @@ class CharacterBody
     // used to filter out weapon from intersection checks
     static const uint32_t FIRST_PERSON_LAYER = 1 << 0;
     // How much slopeiness will cause the character to slide down instead of standing on it
-    static const constexpr float SLOPE_THRESHOLD = 0.2;
+    static const constexpr float SLOPE_THRESHOLD = 0.2f;
     //
-    static const constexpr float CAPSULE_RADIUS = 0.4;
+    static const constexpr float CAPSULE_RADIUS = 0.4f;
     // Collision detection and resolution timestep
-    static const constexpr float FIXED_COLLISION_DT = 1.0 / 120.0; // 120FPS
+    static const constexpr float FIXED_COLLISION_DT = 1.0f / 66.67f; //66.67 ticks per second
 
     //--------------------------------------
     // Input values

@@ -29,6 +29,7 @@
 #include <new>
 #include <cstdlib>
 #include <atomic>
+#include "log.h"
 
 //#define WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
 
@@ -49,6 +50,8 @@ namespace wi
 			return;
 		}
 		initialized = true;
+
+		INIT_LOG();
 
 		wi::initializer::InitializeComponentsAsync();
 
@@ -584,6 +587,11 @@ namespace wi
 		wi::backlog::Draw(canvas, cmd, colorspace);
 
 		wi::profiler::EndRange(range); // Compose
+	}
+
+	void Application::Shutdown()
+	{
+		SHUTDOWN_LOG();
 	}
 
 	void Application::SetWindow(wi::platform::window_type window)

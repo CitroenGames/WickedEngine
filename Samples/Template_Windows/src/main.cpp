@@ -1,17 +1,16 @@
-// TemplateWindows.cpp : Defines the entry point for the application.
-//
-
 #include "stdafx.h"
 #include "main.h"
 #include "App.h"
+#include "log.h"
 
 #define MAX_LOADSTRING 100
 
 // Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-App application;					// Wicked Engine Application
+HINSTANCE hInst;                        // current instance
+WCHAR szTitle[MAX_LOADSTRING];          // The title bar text
+WCHAR szWindowClass[MAX_LOADSTRING];    // the main window class name
+App application;						// Wicked Engine Application
+wi::RenderPath3D* myGame;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -43,11 +42,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-	wi::RenderPath3D myGame;
-	application.ActivatePath(&myGame);
+	application.ActivatePath(myGame);
 
 	application.Initialize();
-	wi::initializer::InitializeComponentsImmediate();
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TEMPLATEWINDOWS));
 
@@ -66,10 +63,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 		else {
 
-			application.Run(); // run the update - render loop (mandatory)
+			application.Run(); // update (mandatory)
 
 		}
 	}
+
+	application.Shutdown();
 
     return (int) msg.wParam;
 }
