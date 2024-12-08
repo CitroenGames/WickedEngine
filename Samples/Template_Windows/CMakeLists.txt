@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 project(Template_Windows)
 
-file(GLOB SOURCE_FILES CONFIGURE_DEPENDS "*.cpp" "*.h")
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.h")
 
 set(LIB_DXCOMPILER "dxcompiler.dll")
 
-list(APPEND SOURCE_FILES
-${CMAKE_CURRENT_SOURCE_DIR}/TemplateWindows.rc
-)
+list(APPEND SOURCE_FILES resources/TemplateWindows.rc)
+add_subdirectory(3rdparty)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
@@ -15,6 +14,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     WickedEngine_Windows
+    DirectXTK
 )
 
 if(MSVC)

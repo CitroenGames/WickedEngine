@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "main.h"
+#include "App.h"
 
 #define MAX_LOADSTRING 100
 
@@ -10,7 +11,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-wi::Application application;					// Wicked Engine Application
+App application;					// Wicked Engine Application
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -25,8 +26,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
-    // TODO: Place code here.
 
     BOOL dpi_success = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     assert(dpi_success);
@@ -43,6 +42,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         return FALSE;
     }
+
+	application.Initialize();
+	wi::initializer::InitializeComponentsImmediate();
+
+	wi::RenderPath3D myGame;
+	application.ActivatePath(&myGame);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TEMPLATEWINDOWS));
 
