@@ -1,5 +1,31 @@
 #include "stdafx.h"
 #include <SDL2/SDL.h>
+#include "log.h"
+
+class game : public wi::Application
+{
+public:
+    void Initialize() override;
+	void Update(float dt) override;
+
+};
+
+void game::Initialize()
+{
+	wi::Application::Initialize();
+	wi::initializer::InitializeComponentsImmediate();
+
+	///wi::scene::LoadModel("Content/scripts/character_controller/assets/level.wiscene");
+
+    LOG_TRACE("Application initialized");
+
+	wi::lua::RunFile("Content/scripts/character_controller/character_controller.lua");
+}
+
+void game::Update(float dt)
+{
+    wi::Application::Update(dt);
+}
 
 int sdl_loop(wi::Application &application)
 {
@@ -42,7 +68,8 @@ int sdl_loop(wi::Application &application)
 
 int main(int argc, char *argv[])
 {
-    wi::Application application;
+    INIT_LOG();
+    game application;
     #ifdef WickedEngine_SHADER_DIR
     wi::renderer::SetShaderSourcePath(WickedEngine_SHADER_DIR);
     #endif
@@ -63,9 +90,12 @@ int main(int argc, char *argv[])
 
     application.SetWindow(window.get());
 
+    application.Initialize();
+
     int ret = sdl_loop(application);
 
     SDL_Quit();
 
+    SHUTDOWN_LOG();
     return ret;
 }
