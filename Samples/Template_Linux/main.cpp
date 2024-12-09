@@ -96,6 +96,6 @@ int main(int argc, char *argv[])
 
     SDL_Quit();
 
-    SHUTDOWN_LOG();
+    application.Shutdown();
     return ret;
 }
