@@ -31,7 +31,7 @@
 #include <atomic>
 #include "log.h"
 
-//#define WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
+#define WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
 
 #ifdef WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
 static std::atomic<uint32_t> number_of_heap_allocations{ 0 };

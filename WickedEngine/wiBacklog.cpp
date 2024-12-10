@@ -13,7 +13,6 @@
 #include "wiGUI.h"
 #include "log.h"
 
-#include "imgui.h"
 #include <mutex>
 #include <deque>
 #include <limits>
