@@ -13,6 +13,7 @@
 #include "wiGUI.h"
 #include "log.h"
 
+#include "imgui.h"
 #include <mutex>
 #include <deque>
 #include <limits>
@@ -91,7 +92,7 @@ namespace wi::backlog
 	{
 		if (!locked)
 		{
-			if (wi::input::Press(wi::input::KEYBOARD_BUTTON_HOME) && !GUI.IsTyping())
+			if (wi::input::Press(wi::input::KEYBOARD_BUTTON_INSERT) && !GUI.IsTyping())
 			{
 				Toggle();
 			}
