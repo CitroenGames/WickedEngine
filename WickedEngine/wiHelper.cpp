@@ -10,10 +10,6 @@
 #include "Utility/basis_universal/encoder/basisu_comp.h"
 #include "Utility/basis_universal/encoder/basisu_gpu_texture.h"
 
-#include <thread>
-#include <locale>
-#include <chrono>
-#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <codecvt> // string conversion
