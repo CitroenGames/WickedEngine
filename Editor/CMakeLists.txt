@@ -2,10 +2,15 @@ cmake_minimum_required(VERSION 3.12)
 
 project(WickedEngineEditor)
 
+set(CMAKE_CXX_STANDARD 20)
+
 file(GLOB SOURCE_FILES CONFIGURE_DEPENDS *.cpp)
 list(FILTER SOURCE_FILES EXCLUDE REGEX ${CMAKE_CURRENT_SOURCE_DIR}/main_.*)
 list(APPEND SOURCE_FILES main_${PLATFORM}.cpp)
 
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
 
 if (WIN32)
 	list (APPEND SOURCE_FILES

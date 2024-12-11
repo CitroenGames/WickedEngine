@@ -222,3 +222,4 @@ wiShaderdump.h
 *.a
 *.elf
 *.prx
+/Content/fps

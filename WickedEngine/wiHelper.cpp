@@ -1244,9 +1244,21 @@ namespace wi::helper
 #endif // PLATFORM_LINUX
 	}
 
+	inline std::string to_string(const std::u8string& u8str)
+	{
+		// Simple conversion since underlying data is UTF-8 encoded and char8_t is unsigned type
+		std::string result;
+		result.reserve(u8str.size());
+		for (char8_t ch : u8str)
+		{
+			result.push_back(static_cast<char>(ch));
+		}
+		return result;
+	}
+
 	void GetFileNamesInDirectory(const std::string& directory, std::function<void(std::string fileName)> onSuccess, const std::string& filter_extension)
 	{
-		std::filesystem::path directory_path = ToNativeString(directory);
+		std::filesystem::path directory_path(directory);
 		if (!std::filesystem::exists(directory_path))
 			return;
 
@@ -1254,8 +1266,16 @@ namespace wi::helper
 		{
 			if (entry.is_directory())
 				continue;
-			std::string filename = entry.path().filename().generic_string();
-			if (filter_extension.empty() || wi::helper::toUpper(wi::helper::GetExtensionFromFileName(filename)).compare(wi::helper::toUpper(filter_extension)) == 0)
+
+			// Get the filename as a std::u8string first
+			std::u8string u8filename = entry.path().filename().generic_u8string();
+			std::string filename = to_string(u8filename);
+
+			// Perform your checks/operations
+			// Assuming you have wi::helper::toUpper and wi::helper::GetExtensionFromFileName
+			// Replace them with your own implementations or remove them if not needed.
+			if (filter_extension.empty() ||
+				wi::helper::toUpper(wi::helper::GetExtensionFromFileName(filename)) == wi::helper::toUpper(filter_extension))
 			{
 				onSuccess(directory + filename);
 			}
@@ -1264,7 +1284,7 @@ namespace wi::helper
 
 	void GetFolderNamesInDirectory(const std::string& directory, std::function<void(std::string folderName)> onSuccess)
 	{
-		std::filesystem::path directory_path = ToNativeString(directory);
+		std::filesystem::path directory_path(directory);
 		if (!std::filesystem::exists(directory_path))
 			return;
 
@@ -1272,7 +1292,11 @@ namespace wi::helper
 		{
 			if (!entry.is_directory())
 				continue;
-			std::string filename = entry.path().filename().generic_string();
+
+			// Get the folder name as a std::u8string first
+			std::u8string u8filename = entry.path().filename().generic_u8string();
+			std::string filename = to_string(u8filename);
+
 			onSuccess(directory + filename);
 		}
 	}
