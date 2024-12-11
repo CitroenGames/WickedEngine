@@ -191,6 +191,18 @@ namespace wi::helper
 		return stagingTex.mapped_data != nullptr;
 	}
 
+	inline std::string to_string(const std::u8string& u8str)
+	{
+		// Simple conversion since underlying data is UTF-8 encoded and char8_t is unsigned type
+		std::string result;
+		result.reserve(u8str.size());
+		for (char8_t ch : u8str)
+		{
+			result.push_back(static_cast<char>(ch));
+		}
+		return result;
+	}
+
 	bool saveTextureToMemoryFile(const wi::graphics::Texture& texture, const std::string& fileExtension, wi::vector<uint8_t>& filedata)
 	{
 		using namespace wi::graphics;
@@ -980,7 +992,7 @@ namespace wi::helper
 			std::filesystem::path relative = std::filesystem::relative(filepath, rootpath);
 			if (!relative.empty())
 			{
-				path = relative.generic_string();
+				path = to_string(relative.generic_u8string());
 			}
 		}
 
@@ -991,7 +1003,7 @@ namespace wi::helper
 		std::filesystem::path absolute = std::filesystem::absolute(ToNativeString(path));
 		if (!absolute.empty())
 		{
-			path = absolute.generic_string();
+			path = to_string(absolute.generic_u8string());
 		}
 	}
 
@@ -1080,7 +1092,7 @@ namespace wi::helper
 		return "";
 #else
 		auto path = std::filesystem::temp_directory_path();
-		return path.generic_string();
+		return to_string(path.generic_u8string());
 #endif // PLATFORM_XBOX || PLATFORM_PS5
 	}
 
@@ -1110,7 +1122,7 @@ namespace wi::helper
 		return "/app0";
 #else
 		auto path = std::filesystem::current_path();
-		return path.generic_string();
+		return to_string(path.generic_u8string());
 #endif // PLATFORM_PS5
 	}
 
@@ -1244,17 +1256,7 @@ namespace wi::helper
 #endif // PLATFORM_LINUX
 	}
 
-	inline std::string to_string(const std::u8string& u8str)
-	{
-		// Simple conversion since underlying data is UTF-8 encoded and char8_t is unsigned type
-		std::string result;
-		result.reserve(u8str.size());
-		for (char8_t ch : u8str)
-		{
-			result.push_back(static_cast<char>(ch));
-		}
-		return result;
-	}
+
 
 	void GetFileNamesInDirectory(const std::string& directory, std::function<void(std::string fileName)> onSuccess, const std::string& filter_extension)
 	{
