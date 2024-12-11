@@ -1,0 +1,3 @@
+[submodule "Samples/Template_Windows/3rdparty/DirectXTK"]
+	path = Samples/Template_Windows/3rdparty/DirectXTK
+	url = https://github.com/microsoft/DirectXTK.git

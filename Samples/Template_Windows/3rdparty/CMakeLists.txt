@@ -1,1 +1,1 @@
-add_subdirectory(DirectXTK-oct2024)
+add_subdirectory(DirectXTK)
