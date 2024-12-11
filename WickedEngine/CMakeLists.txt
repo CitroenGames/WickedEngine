@@ -49,6 +49,8 @@ else ()
 	endif()
 endif()
 
+target_compile_features(${TARGET_NAME} PUBLIC cxx_std_20)
+
 add_subdirectory(LUA)
 add_subdirectory(Utility)
 
