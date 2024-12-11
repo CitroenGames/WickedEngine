@@ -1,7 +1,6 @@
 #include "wiHelper.h"
 #include "wiPlatform.h"
 #include "wiBacklog.h"
-#include "wiEventHandler.h"
 #include "wiMath.h"
 
 #include "Utility/lodepng.h"
@@ -15,7 +14,6 @@
 #include <codecvt> // string conversion
 #include <filesystem>
 #include <vector>
-#include <iostream>
 #include <cstdlib>
 
 #ifdef PLATFORM_LINUX
@@ -1134,7 +1132,7 @@ namespace wi::helper
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = nullptr;
 			ofn.lpstrFile = szFile;
-			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 			// use the contents of szFile to initialize itself.
 			ofn.lpstrFile[0] = '\0';
 			ofn.nMaxFile = sizeof(szFile);
@@ -1398,7 +1396,7 @@ namespace wi::helper
 		return num;
 #endif // _WIN32
 	}
-	
+
 	void DebugOut(const std::string& str, DebugLevel level)
 	{
 #ifdef _WIN32
@@ -1423,7 +1421,7 @@ namespace wi::helper
 	}
 #endif // _WIN32
 	}
-	
+
 	void Sleep(float milliseconds)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)milliseconds));
