@@ -4,6 +4,10 @@ set(MIN_OpenImageDenoise_VERSION "2.0")
 
 option(USE_SDL2 "Use SDL2" OFF)
 
+if(WIN32)
+	option(BUILD_VULKAN "Build Vulkan support" ON)
+endif()
+
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 set(INSTALL_LOCAL_CONFIGDIR "${CMAKE_BINARY_DIR}/cmake")
@@ -92,6 +96,10 @@ add_library(${TARGET_NAME} ${WICKED_LIBRARY_TYPE}
 	${SOURCE_FILES}
 	${HEADER_FILES}
 )
+
+if(BUILD_VULKAN)
+	target_compile_definitions(${TARGET_NAME} PUBLIC WICKED_BUILD_VULKAN)
+endif()
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /GS /Oi")
