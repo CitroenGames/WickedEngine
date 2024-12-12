@@ -607,10 +607,10 @@ SHADERTYPE GetPSTYPE(RENDERPASS renderPass, bool alphatest, bool transparent, Ma
 {
 	SHADERTYPE realPS = SHADERTYPE_COUNT;
 
-	switch (renderPass)
+	switch (static_cast<int>(renderPass))
 	{
 	case RENDERPASS_MAIN:
-		realPS = SHADERTYPE((transparent ? PSTYPE_OBJECT_TRANSPARENT_PERMUTATION_BEGIN : PSTYPE_OBJECT_PERMUTATION_BEGIN) + shaderType);
+		realPS = SHADERTYPE((transparent ? PSTYPE_OBJECT_TRANSPARENT_PERMUTATION_BEGIN : PSTYPE_OBJECT_PERMUTATION_BEGIN) + static_cast<int>(shaderType));
 		break;
 	case RENDERPASS_PREPASS:
 		if (alphatest)
@@ -930,7 +930,7 @@ void LoadShaders()
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_VOXELIZER], "objectPS_voxelizer.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_VOXEL], "voxelPS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_FORCEFIELDVISUALIZER], "forceFieldVisualizerPS.cso"); });
-	
+
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_RAYTRACE_DEBUGBVH], "raytrace_debugbvhPS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_DOWNSAMPLEDEPTHBUFFER], "downsampleDepthBuffer4xPS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::PS, shaders[PSTYPE_POSTPROCESS_UPSAMPLE_BILATERAL], "upsample_bilateralPS.cso"); });
@@ -989,7 +989,7 @@ void LoadShaders()
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_COPYTEXTURE2D_UNORM4_BORDEREXPAND], "copytexture2D_unorm4_borderexpandCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_COPYTEXTURE2D_FLOAT4_BORDEREXPAND], "copytexture2D_float4_borderexpandCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_SKINNING], "skinningCS.cso"); });
-	
+
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_PAINT_TEXTURE], "paint_textureCS.cso"); });
 
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_BLUR_GAUSSIAN_FLOAT1], "blur_gaussian_float1CS.cso"); });
@@ -1813,7 +1813,7 @@ void LoadShaders()
 
 	wi::jobsystem::Wait(ctx);
 
-	
+
 
 	for (uint32_t renderPass = 0; renderPass < RENDERPASS_COUNT; ++renderPass)
 	{
@@ -2706,7 +2706,7 @@ struct SHCAM
 	Frustum frustum;					// This frustum can be used for intersection test with wiPrimitive primitives
 	BoundingFrustum boundingfrustum;	// This boundingfrustum can be used for frustum vs frustum intersection test
 
-	inline void init(const XMFLOAT3& eyePos, const XMFLOAT4& rotation, float nearPlane, float farPlane, float fov) 
+	inline void init(const XMFLOAT3& eyePos, const XMFLOAT4& rotation, float nearPlane, float farPlane, float fov)
 	{
 		const XMVECTOR E = XMLoadFloat3(&eyePos);
 		const XMVECTOR Q = XMQuaternionNormalize(XMLoadFloat4(&rotation));
@@ -2717,7 +2717,7 @@ struct SHCAM
 		const XMMATRIX P = XMMatrixPerspectiveFovLH(fov, 1, farPlane, nearPlane);
 		view_projection = XMMatrixMultiply(V, P);
 		frustum.Create(view_projection);
-		
+
 		BoundingFrustum::CreateFromMatrix(boundingfrustum, P);
 		std::swap(boundingfrustum.Near, boundingfrustum.Far);
 		boundingfrustum.Transform(boundingfrustum, XMMatrixInverse(nullptr, V));
@@ -2937,7 +2937,7 @@ void RenderMeshes(
 		device->CheckCapability(GraphicsDeviceCapability::TESSELLATION)
 		;
 	const bool skip_planareflection_objects = flags & DRAWSCENE_SKIP_PLANAR_REFLECTION_OBJECTS;
-	
+
 	// Do we need to compute a light mask for this pass on the CPU?
 	const bool forwardLightmaskRequest =
 		renderPass == RENDERPASS_ENVMAPCAPTURE ||
@@ -3116,7 +3116,7 @@ void RenderMeshes(
 				renderPass != RENDERPASS_PREPASS &&
 				renderPass != RENDERPASS_PREPASS_DEPTHONLY &&
 				renderPass != RENDERPASS_VOXELIZE
-				) 
+				)
 			{
 				// depth only alpha test will be full res
 				device->BindShadingRate(material.shadingRate, cmd);
@@ -3229,7 +3229,7 @@ void RenderMeshes(
 
 void RenderImpostors(
 	const Visibility& vis,
-	RENDERPASS renderPass, 
+	RENDERPASS renderPass,
 	CommandList cmd
 )
 {
@@ -3366,7 +3366,7 @@ void UpdateVisibility(Visibility& vis)
 	assert(vis.scene != nullptr); // User must provide a scene!
 	assert(vis.camera != nullptr); // User must provide a camera!
 
-	// The parallel frustum culling is first performed in shared memory, 
+	// The parallel frustum culling is first performed in shared memory,
 	//	then each group writes out it's local list to global memory
 	//	The shared memory approach reduces atomics and helps the list to remain
 	//	more coherent (less randomly organized compared to original order)
@@ -5490,7 +5490,7 @@ void DrawWaterRipples(const Visibility& vis, CommandList cmd)
 
 void DrawSoftParticles(
 	const Visibility& vis,
-	bool distortion, 
+	bool distortion,
 	CommandList cmd
 )
 {
@@ -6149,7 +6149,7 @@ void DrawShadowmaps(
 			const LightComponent& light = vis.scene->lights[lightIndex];
 			if (light.IsInactive())
 				continue;
-			
+
 			const bool shadow = light.IsCastingShadow() && !light.IsStatic();
 			if (!shadow)
 				continue;
@@ -8291,7 +8291,7 @@ void ComputeSkyAtmosphereCameraVolumeLut(CommandList cmd)
 	device->EventBegin("ComputeSkyAtmosphereCameraVolumeLut", cmd);
 
 	BindCommonResources(cmd);
-	
+
 	// Camera Volume Lut pass:
 	{
 		device->EventBegin("CameraVolumeLut", cmd);
@@ -8339,7 +8339,7 @@ void ComputeSkyAtmosphereCameraVolumeLut(CommandList cmd)
 void DrawSky(const Scene& scene, CommandList cmd)
 {
 	device->EventBegin("DrawSky", cmd);
-	
+
 	if (scene.weather.skyMap.IsValid())
 	{
 		device->BindPipelineState(&PSO_sky[SKYRENDERING_STATIC], cmd);
@@ -8821,7 +8821,7 @@ void RefreshEnvProbes(const Visibility& vis, CommandList cmd)
 			}
 
 			device->PushConstants(&push, sizeof(push), cmd);
-			
+
 			{
 				GPUBarrier barriers[] = {
 					GPUBarrier::Image(&envrenderingColorBuffer, ResourceState::SHADER_RESOURCE, ResourceState::UNORDERED_ACCESS),
@@ -10142,7 +10142,7 @@ void CopyTexture2D(const Texture& dst, int DstMIP, int DstX, int DstY, const Tex
 void RayTraceScene(
 	const Scene& scene,
 	const Texture& output,
-	int accumulation_sample, 
+	int accumulation_sample,
 	CommandList cmd,
 	const Texture* output_albedo,
 	const Texture* output_normal,
@@ -11749,7 +11749,7 @@ void Postprocess_Blur_Gaussian(
 		break;
 	}
 	device->BindComputeShader(&shaders[cs], cmd);
-	
+
 	// Horizontal:
 	{
 		const TextureDesc& desc = temp.GetDesc();
@@ -12415,7 +12415,7 @@ void Postprocess_MSAO(
 	const float Accentuation = 0.1f;
 
 	// The msao_compute will be called repeatedly, so create a local lambda for it:
-	auto msao_compute = [&](const Texture& write_result, const Texture& read_depth) 
+	auto msao_compute = [&](const Texture& write_result, const Texture& read_depth)
 	{
 		const TextureDesc& desc = read_depth.GetDesc();
 
@@ -12616,7 +12616,7 @@ void Postprocess_MSAO(
 		msao_upsample.NoiseFilterStrength = 1.0f / (powf(10.0f, g_NoiseFilterTolerance) + msao_upsample.kUpsampleTolerance);
 		msao_upsample.StepSize = (float)lineardepth.GetDesc().width / (float)LoWidth;
 		device->PushConstants(&msao_upsample, sizeof(msao_upsample), cmd);
-		
+
 		device->BindUAV(&Destination, 0, cmd);
 		device->BindResource(&LoResDepth, 0, cmd);
 		device->BindResource(&HiResDepth, 1, cmd);
@@ -15967,7 +15967,7 @@ void Postprocess_VolumetricClouds(
 
 	PostProcess postprocess;
 
-	// Render quarter-res: 
+	// Render quarter-res:
 	postprocess.resolution.x = res.final_resolution.x / 4;
 	postprocess.resolution.y = res.final_resolution.y / 4;
 	postprocess.resolution_rcp.x = 1.0f / postprocess.resolution.x;
@@ -16038,7 +16038,7 @@ void Postprocess_VolumetricClouds(
 	postprocess.resolution_rcp.y = 1.0f / postprocess.resolution.y;
 	volumetricclouds_frame = (float)res.frame;
 	res.frame++; // before temporal_output index is computed!
-	
+
 	int temporal_output = res.frame % 2;
 	int temporal_history = 1 - temporal_output;
 

@@ -30,10 +30,10 @@ enum TEST_TYPE
 };
 
 // Controller Test UI Data, info down below will be using Xbox Controller as reference
-wi::SpriteFont 
-	b_a, b_b, b_x, b_y, // Action Buttons: A, B, X, Y 
+wi::SpriteFont
+	b_a, b_b, b_x, b_y, // Action Buttons: A, B, X, Y
 	b_du, b_dd, b_dl, b_dr, // Directional Buttons: Up, Down, Left, Right
-	b_sta, b_bck, // Menu Buttons: Start, Back 
+	b_sta, b_bck, // Menu Buttons: Start, Back
 	b_lb, b_rb, // Shoulder Buttons: LB, RB
 	b_ls, b_rs, // Stick Press Buttons: Left Stick, Right Stick
 	t_l, t_r, // Trigger Inputs: LT, RT
@@ -160,7 +160,7 @@ void TestsRenderer::Load()
 	testSelector.AddItem("65k Instances", INSTANCESTEST);
 	testSelector.AddItem("Container perf", CONTAINERPERF);
 	testSelector.SetMaxVisibleItemCount(10);
-	testSelector.OnSelect([=](wi::gui::EventArgs args) {
+	testSelector.OnSelect([=, this](wi::gui::EventArgs args) {
 
 		// Reset all state that tests might have modified:
 		wi::eventhandler::SetVSync(true);
@@ -1115,7 +1115,7 @@ void TestsRenderer::RunNetworkTest()
 
 		// Listen on the port which the sender uses:
 		wi::network::ListenPort(&sock, connection.port);
-		
+
 		// We can check for incoming messages with CanReceive(). A timeout value can be specified in microseconds
 		//	to let the function block for some time, otherwise it returns imediately
 		//	It is not necessary to use this, but the wi::network::Receive() will block until there is a message

@@ -49,7 +49,6 @@ else ()
 	endif()
 endif()
 
-target_compile_features(${TARGET_NAME} PUBLIC cxx_std_20)
 
 add_subdirectory(LUA)
 add_subdirectory(Utility)
@@ -74,6 +73,8 @@ endif()
 
 add_library(WickedEngine ALIAS ${TARGET_NAME})
 set_target_properties(${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
+
+target_compile_features(${TARGET_NAME} PUBLIC cxx_std_20)
 
 target_include_directories(${TARGET_NAME} SYSTEM PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

@@ -38,10 +38,10 @@ namespace wi
 
 	void LoadingScreen::addLoadingComponent(RenderPath* component, Application* main, float fadeSeconds, wi::Color fadeColor)
 	{
-		addLoadingFunction([=](wi::jobsystem::JobArgs args) {
+		addLoadingFunction([=, this](wi::jobsystem::JobArgs args) {
 			component->Load();
 			});
-		onFinished([=] {
+		onFinished([=, this] {
 			main->ActivatePath(component, fadeSeconds, fadeColor);
 			});
 	}

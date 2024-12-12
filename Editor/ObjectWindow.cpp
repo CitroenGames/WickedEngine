@@ -260,7 +260,7 @@ void ObjectWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 940));
 
 	closeButton.SetTooltip("Delete ObjectComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -281,7 +281,7 @@ void ObjectWindow::Create(EditorComponent* _editor)
 
 	meshCombo.Create("Mesh: ");
 	meshCombo.SetSize(XMFLOAT2(wid, hei));
-	meshCombo.OnSelect([=](wi::gui::EventArgs args) {
+	meshCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		ObjectComponent* object = scene.objects.GetComponent(entity);
 		if (object == nullptr)
@@ -550,7 +550,7 @@ void ObjectWindow::Create(EditorComponent* _editor)
 	lightmapResolutionSlider.OnSlide([&](wi::gui::EventArgs args) {
 		// unfortunately, we must be pow2 with full float lightmap format, otherwise it could be unlimited (but accumulation blending would suffer then)
 		//	or at least for me, downloading the lightmap was glitching out when non-pow 2 and RGBA32_FLOAT format
-		lightmapResolutionSlider.SetValue(float(wi::math::GetNextPowerOfTwo(uint32_t(args.fValue)))); 
+		lightmapResolutionSlider.SetValue(float(wi::math::GetNextPowerOfTwo(uint32_t(args.fValue))));
 	});
 	AddWidget(&lightmapResolutionSlider);
 

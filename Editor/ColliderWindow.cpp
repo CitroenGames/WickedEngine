@@ -12,7 +12,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 340));
 
 	closeButton.SetTooltip("Delete ColliderComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -39,7 +39,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	cpuCheckBox.Create("CPU: ");
 	cpuCheckBox.SetTooltip("Enable for use on the CPU. CPU usage includes: springs.");
 	cpuCheckBox.SetSize(XMFLOAT2(hei, hei));
-	cpuCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	cpuCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -54,7 +54,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	gpuCheckBox.Create("GPU: ");
 	gpuCheckBox.SetTooltip("Enable for use on the GPU. GPU usage includes: emitter and hair particle systems.\nNote that GPU can support only a limited amount of colliders.");
 	gpuCheckBox.SetSize(XMFLOAT2(hei, hei));
-	gpuCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	gpuCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -72,7 +72,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	shapeCombo.AddItem("Sphere", (uint64_t)ColliderComponent::Shape::Sphere);
 	shapeCombo.AddItem("Capsule", (uint64_t)ColliderComponent::Shape::Capsule);
 	shapeCombo.AddItem("Plane", (uint64_t)ColliderComponent::Shape::Plane);
-	shapeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	shapeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -106,7 +106,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	offsetX.Create(-10, 10, 0, 10000, "Offset X: ");
 	offsetX.SetSize(XMFLOAT2(wid, hei));
 	offsetX.SetPos(XMFLOAT2(x, y += step));
-	offsetX.OnSlide([=](wi::gui::EventArgs args) {
+	offsetX.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -121,7 +121,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	offsetY.Create(-10, 10, 0, 10000, "Offset Y: ");
 	offsetY.SetSize(XMFLOAT2(wid, hei));
 	offsetY.SetPos(XMFLOAT2(x, y += step));
-	offsetY.OnSlide([=](wi::gui::EventArgs args) {
+	offsetY.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -136,7 +136,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	offsetZ.Create(-10, 10, 0, 10000, "Offset Z: ");
 	offsetZ.SetSize(XMFLOAT2(wid, hei));
 	offsetZ.SetPos(XMFLOAT2(x, y += step));
-	offsetZ.OnSlide([=](wi::gui::EventArgs args) {
+	offsetZ.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -155,7 +155,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	tailX.Create(-10, 10, 0, 10000, "Tail X: ");
 	tailX.SetSize(XMFLOAT2(wid, hei));
 	tailX.SetPos(XMFLOAT2(x, y += step));
-	tailX.OnSlide([=](wi::gui::EventArgs args) {
+	tailX.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -170,7 +170,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	tailY.Create(-10, 10, 0, 10000, "Tail Y: ");
 	tailY.SetSize(XMFLOAT2(wid, hei));
 	tailY.SetPos(XMFLOAT2(x, y += step));
-	tailY.OnSlide([=](wi::gui::EventArgs args) {
+	tailY.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -185,7 +185,7 @@ void ColliderWindow::Create(EditorComponent* _editor)
 	tailZ.Create(-10, 10, 0, 10000, "Tail Z: ");
 	tailZ.SetSize(XMFLOAT2(wid, hei));
 	tailZ.SetPos(XMFLOAT2(x, y += step));
-	tailZ.OnSlide([=](wi::gui::EventArgs args) {
+	tailZ.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

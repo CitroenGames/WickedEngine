@@ -12,7 +12,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(660, 2140));
 
 	closeButton.SetTooltip("Delete WeatherComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -37,7 +37,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	primaryButton.Create("Set as primary weather");
 	primaryButton.SetTooltip("This will be set as the primary weather used in rendering");
 	primaryButton.SetPos(XMFLOAT2(mod_x, y));
-	primaryButton.OnClick([=](wi::gui::EventArgs args) {
+	primaryButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		Scene& scene = editor->GetCurrentScene();
 		if (!scene.weathers.Contains(entity))
@@ -557,40 +557,40 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	};
 
 	SetupTextFieldComponents4(gradientSmallFirstTextFields, "Gradient small: ", "Control with a gradient where small clouds should appear, based on type 0.0");
-	gradientSmallFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.x = args.fValue; });
-	gradientSmallFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.y = args.fValue; });
-	gradientSmallFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.z = args.fValue; });
-	gradientSmallFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.w = args.fValue; });
+	gradientSmallFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.x = args.fValue; });
+	gradientSmallFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.y = args.fValue; });
+	gradientSmallFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.z = args.fValue; });
+	gradientSmallFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientSmall.w = args.fValue; });
 
 	SetupTextFieldComponents4(gradientMediumFirstTextFields, "Gradient medium: ", "Control with a gradient where medium clouds should appear, based on type 0.5");
-	gradientMediumFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.x = args.fValue; });
-	gradientMediumFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.y = args.fValue; });
-	gradientMediumFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.z = args.fValue; });
-	gradientMediumFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.w = args.fValue; });
-	
+	gradientMediumFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.x = args.fValue; });
+	gradientMediumFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.y = args.fValue; });
+	gradientMediumFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.z = args.fValue; });
+	gradientMediumFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientMedium.w = args.fValue; });
+
 	SetupTextFieldComponents4(gradientLargeFirstTextFields, "Gradient large: ", "Control with a gradient where large clouds should appear, based on type 1.0");
-	gradientLargeFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.x = args.fValue; });
-	gradientLargeFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.y = args.fValue; });
-	gradientLargeFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.z = args.fValue; });
-	gradientLargeFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.w = args.fValue; });
-	
+	gradientLargeFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.x = args.fValue; });
+	gradientLargeFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.y = args.fValue; });
+	gradientLargeFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.z = args.fValue; });
+	gradientLargeFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.gradientLarge.w = args.fValue; });
+
 	SetupTextFieldComponents4(anvilDeformationSmallFirstTextFields, "Anvil small: ", "Control the inward amount for small clouds (type 0.0). Specify amount top (X), top offset (Y), amount bot (Z), bot offset (W)");
-	anvilDeformationSmallFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.x = args.fValue; });
-	anvilDeformationSmallFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.y = args.fValue; });
-	anvilDeformationSmallFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.z = args.fValue; });
-	anvilDeformationSmallFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.w = args.fValue; });
-	
+	anvilDeformationSmallFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.x = args.fValue; });
+	anvilDeformationSmallFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.y = args.fValue; });
+	anvilDeformationSmallFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.z = args.fValue; });
+	anvilDeformationSmallFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationSmall.w = args.fValue; });
+
 	SetupTextFieldComponents4(anvilDeformationMediumFirstTextFields, "Anvil medium: ", "Control the inward amount for medium clouds (type 0.5). Specify amount top (X), top offset (Y), amount bot (Z), bot offset (W)");
-	anvilDeformationMediumFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.x = args.fValue; });
-	anvilDeformationMediumFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.y = args.fValue; });
-	anvilDeformationMediumFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.z = args.fValue; });
-	anvilDeformationMediumFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.w = args.fValue; });
-		
+	anvilDeformationMediumFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.x = args.fValue; });
+	anvilDeformationMediumFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.y = args.fValue; });
+	anvilDeformationMediumFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.z = args.fValue; });
+	anvilDeformationMediumFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationMedium.w = args.fValue; });
+
 	SetupTextFieldComponents4(anvilDeformationLargeFirstTextFields, "Anvil large: ", "Control the inward amount for large clouds (type 1.0). Specify amount top (X), top offset (Y), amount bot (Z), bot offset (W)");
-	anvilDeformationLargeFirstTextFields[0].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.x = args.fValue; });
-	anvilDeformationLargeFirstTextFields[1].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.y = args.fValue; });
-	anvilDeformationLargeFirstTextFields[2].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.z = args.fValue; });
-	anvilDeformationLargeFirstTextFields[3].OnInputAccepted([=](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.w = args.fValue; });
+	anvilDeformationLargeFirstTextFields[0].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.x = args.fValue; });
+	anvilDeformationLargeFirstTextFields[1].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.y = args.fValue; });
+	anvilDeformationLargeFirstTextFields[2].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.z = args.fValue; });
+	anvilDeformationLargeFirstTextFields[3].OnInputAccepted([=, this](wi::gui::EventArgs args) { GetWeather().volumetricCloudParameters.layerFirst.anvilDeformationLarge.w = args.fValue; });
 
 	windSpeedFirstSlider.Create(0.0f, 50.0f, 15.0f, 1000.0f, "Wind speed 1: ");
 	windSpeedFirstSlider.SetTooltip("Wind speed of the noise");
@@ -665,7 +665,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	skyButton.SetTooltip("Load a skybox texture...\nIt can be either a cubemap or spherical projection map");
 	skyButton.SetSize(XMFLOAT2(mod_wid, hei));
 	skyButton.SetPos(XMFLOAT2(mod_x, y += step));
-	skyButton.OnClick([=](wi::gui::EventArgs args) {
+	skyButton.OnClick([=, this](wi::gui::EventArgs args) {
 		auto& weather = GetWeather();
 
 		if (!weather.skyMap.IsValid())
@@ -674,8 +674,8 @@ void WeatherWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Image file (cube or spherical map)";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					auto& weather = GetWeather();
 					weather.skyMapName = fileName;
 					weather.skyMap = wi::resourcemanager::Load(fileName);
@@ -700,7 +700,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	colorgradingButton.SetTooltip("Load a color grading lookup texture. It must be a 256x16 RGBA image!\nYou should use a lossless format for this such as PNG");
 	colorgradingButton.SetSize(XMFLOAT2(mod_wid, hei));
 	colorgradingButton.SetPos(XMFLOAT2(mod_x, y += step));
-	colorgradingButton.OnClick([=](wi::gui::EventArgs args) {
+	colorgradingButton.OnClick([=, this](wi::gui::EventArgs args) {
 		auto& weather = GetWeather();
 
 		if (!weather.colorGradingMap.IsValid())
@@ -709,8 +709,8 @@ void WeatherWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					auto& weather = GetWeather();
 					weather.colorGradingMapName = fileName;
 					weather.colorGradingMap = wi::resourcemanager::Load(fileName, wi::resourcemanager::Flags::IMPORT_COLORGRADINGLUT);
@@ -732,7 +732,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	volumetricCloudsWeatherMapFirstButton.SetTooltip("Load a weather map for volumetric clouds. Red channel is coverage, green is type and blue is water density (rain).");
 	volumetricCloudsWeatherMapFirstButton.SetSize(XMFLOAT2(mod_wid, hei));
 	volumetricCloudsWeatherMapFirstButton.SetPos(XMFLOAT2(mod_x, y += step));
-	volumetricCloudsWeatherMapFirstButton.OnClick([=](wi::gui::EventArgs args) {
+	volumetricCloudsWeatherMapFirstButton.OnClick([=, this](wi::gui::EventArgs args) {
 		auto& weather = GetWeather();
 
 		if (!weather.volumetricCloudsWeatherMapFirst.IsValid())
@@ -741,8 +741,8 @@ void WeatherWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					auto& weather = GetWeather();
 					weather.volumetricCloudsWeatherMapFirstName = fileName;
 					weather.volumetricCloudsWeatherMapFirst = wi::resourcemanager::Load(fileName);
@@ -764,7 +764,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	volumetricCloudsWeatherMapSecondButton.SetTooltip("Load a weather map for volumetric clouds. Red channel is coverage, green is type and blue is water density (rain).");
 	volumetricCloudsWeatherMapSecondButton.SetSize(XMFLOAT2(mod_wid, hei));
 	volumetricCloudsWeatherMapSecondButton.SetPos(XMFLOAT2(mod_x, y += step));
-	volumetricCloudsWeatherMapSecondButton.OnClick([=](wi::gui::EventArgs args) {
+	volumetricCloudsWeatherMapSecondButton.OnClick([=, this](wi::gui::EventArgs args) {
 		auto& weather = GetWeather();
 
 		if (!weather.volumetricCloudsWeatherMapSecond.IsValid())
@@ -773,8 +773,8 @@ void WeatherWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					auto& weather = GetWeather();
 					weather.volumetricCloudsWeatherMapSecondName = fileName;
 					weather.volumetricCloudsWeatherMapSecond = wi::resourcemanager::Load(fileName);
@@ -905,7 +905,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	ocean_resetButton.SetTooltip("Reset ocean to default values.");
 	ocean_resetButton.SetSize(XMFLOAT2(mod_wid, hei));
 	ocean_resetButton.SetPos(XMFLOAT2(mod_x, y += step));
-	ocean_resetButton.OnClick([=](wi::gui::EventArgs args) {
+	ocean_resetButton.OnClick([=, this](wi::gui::EventArgs args) {
 		auto& weather = GetWeather();
 		weather.oceanParameters = wi::Ocean::OceanParameters();
 		editor->GetCurrentScene().ocean = {};
@@ -917,7 +917,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset0Button.SetTooltip("Apply this weather preset to the world.");
 	preset0Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset0Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset0Button.OnClick([=](wi::gui::EventArgs args) {
+	preset0Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather = WeatherComponent();
@@ -931,7 +931,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset1Button.SetTooltip("Apply this weather preset to the world.");
 	preset1Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset1Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset1Button.OnClick([=](wi::gui::EventArgs args) {
+	preset1Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather.ambient = XMFLOAT3(33.0f / 255.0f, 47.0f / 255.0f, 127.0f / 255.0f);
@@ -949,7 +949,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset2Button.SetTooltip("Apply this weather preset to the world.");
 	preset2Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset2Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset2Button.OnClick([=](wi::gui::EventArgs args) {
+	preset2Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather.ambient = XMFLOAT3(86.0f / 255.0f, 29.0f / 255.0f, 29.0f / 255.0f);
@@ -967,7 +967,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset3Button.SetTooltip("Apply this weather preset to the world.");
 	preset3Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset3Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset3Button.OnClick([=](wi::gui::EventArgs args) {
+	preset3Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather.ambient = XMFLOAT3(0.1f, 0.1f, 0.1f);
@@ -985,7 +985,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset4Button.SetTooltip("Apply this weather preset to the world.");
 	preset4Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset4Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset4Button.OnClick([=](wi::gui::EventArgs args) {
+	preset4Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather.ambient = XMFLOAT3(12.0f / 255.0f, 21.0f / 255.0f, 77.0f / 255.0f);
@@ -1003,7 +1003,7 @@ void WeatherWindow::Create(EditorComponent* _editor)
 	preset5Button.SetTooltip("The white furnace mode sets the environment to fully white, it is useful to test energy conservation of light and materials. \nIf you don't see it as fully white, it is because the tone mapping.");
 	preset5Button.SetSize(XMFLOAT2(mod_wid, hei));
 	preset5Button.SetPos(XMFLOAT2(mod_x, y += step));
-	preset5Button.OnClick([=](wi::gui::EventArgs args) {
+	preset5Button.OnClick([=, this](wi::gui::EventArgs args) {
 
 		auto& weather = GetWeather();
 		weather.ambient = XMFLOAT3(0, 0, 0);

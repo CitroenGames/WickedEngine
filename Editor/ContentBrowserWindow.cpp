@@ -213,7 +213,7 @@ void ContentBrowserWindow::RefreshContent()
 		{
 			folder.pop_back();
 		}
-		
+
 		auto last_slash = folder.find_last_of("/\\");
 		if (last_slash != folder.npos) {
 			folder = folder.substr(last_slash);
@@ -239,7 +239,7 @@ void ContentBrowserWindow::RefreshContent()
 }
 void ContentBrowserWindow::SetSelection(SELECTION selection)
 {
-	wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+	wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 		current_selection = selection;
 		for (auto& x : itemButtons)
 		{
@@ -372,7 +372,7 @@ void ContentBrowserWindow::AddItem(const std::string& filename, const std::strin
 	button.SetDescription(itemname);
 	button.SetTooltip(filename);
 	button.OnClick([this, filename](wi::gui::EventArgs args) {
-		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 			editor->Open(filename);
 			});
 		this->SetVisible(false);

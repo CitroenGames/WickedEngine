@@ -71,7 +71,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(320, 400));
 
 	closeButton.SetTooltip("Delete CameraComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -95,7 +95,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	farPlaneSlider.SetSize(XMFLOAT2(wid, hei));
 	farPlaneSlider.SetPos(XMFLOAT2(x, y));
 	farPlaneSlider.SetValue(editor->GetCurrentEditorScene().camera.zFarP);
-	farPlaneSlider.OnSlide([=](wi::gui::EventArgs args) {
+	farPlaneSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -113,7 +113,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	nearPlaneSlider.SetSize(XMFLOAT2(wid, hei));
 	nearPlaneSlider.SetPos(XMFLOAT2(x, y += step));
 	nearPlaneSlider.SetValue(editor->GetCurrentEditorScene().camera.zNearP);
-	nearPlaneSlider.OnSlide([=](wi::gui::EventArgs args) {
+	nearPlaneSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -131,7 +131,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	fovSlider.SetSize(XMFLOAT2(wid, hei));
 	fovSlider.SetPos(XMFLOAT2(x, y += step));
 	fovSlider.SetValue(editor->GetCurrentEditorScene().camera.fov / XM_PI * 180.f);
-	fovSlider.OnSlide([=](wi::gui::EventArgs args) {
+	fovSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -148,7 +148,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	focalLengthSlider.SetTooltip("Controls the depth of field effect's focus distance");
 	focalLengthSlider.SetSize(XMFLOAT2(wid, hei));
 	focalLengthSlider.SetPos(XMFLOAT2(x, y += step));
-	focalLengthSlider.OnSlide([=](wi::gui::EventArgs args) {
+	focalLengthSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -165,7 +165,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	apertureSizeSlider.SetTooltip("Controls the depth of field effect's strength");
 	apertureSizeSlider.SetSize(XMFLOAT2(wid, hei));
 	apertureSizeSlider.SetPos(XMFLOAT2(x, y += step));
-	apertureSizeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	apertureSizeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -182,7 +182,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	apertureShapeXSlider.SetTooltip("Controls the depth of field effect's bokeh shape");
 	apertureShapeXSlider.SetSize(XMFLOAT2(wid, hei));
 	apertureShapeXSlider.SetPos(XMFLOAT2(x, y += step));
-	apertureShapeXSlider.OnSlide([=](wi::gui::EventArgs args) {
+	apertureShapeXSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -199,7 +199,7 @@ void CameraComponentWindow::Create(EditorComponent* _editor)
 	apertureShapeYSlider.SetTooltip("Controls the depth of field effect's bokeh shape");
 	apertureShapeYSlider.SetSize(XMFLOAT2(wid, hei));
 	apertureShapeYSlider.SetPos(XMFLOAT2(x, y += step));
-	apertureShapeYSlider.OnSlide([=](wi::gui::EventArgs args) {
+	apertureShapeYSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

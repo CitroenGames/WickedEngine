@@ -118,7 +118,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	{
 		wi::renderer::SetToDrawGridHelper(editor->main->config.GetSection("options").GetBool("grid_helper"));
 	}
-	gridHelperCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	gridHelperCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::renderer::SetToDrawGridHelper(args.bValue);
 		editor->main->config.GetSection("options").Set("grid_helper", args.bValue);
 		editor->main->config.Commit();
@@ -212,7 +212,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	saveModeComboBox.SetColor(wi::Color(50, 180, 100, 180), wi::gui::IDLE);
 	saveModeComboBox.SetColor(wi::Color(50, 220, 140, 255), wi::gui::FOCUS);
 	saveModeComboBox.SetSelected(editor->main->config.GetSection("options").GetInt("save_mode"));
-	saveModeComboBox.OnSelect([=](wi::gui::EventArgs args) {
+	saveModeComboBox.OnSelect([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("options").Set("save_mode", args.iValue);
 		editor->main->config.Commit();
 		});
@@ -227,7 +227,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 		transformToolOpacitySlider.SetValue(editor->main->config.GetSection("options").GetFloat("transform_tool_opacity"));
 		editor->translator.opacity = transformToolOpacitySlider.GetValue();
 	}
-	transformToolOpacitySlider.OnSlide([=](wi::gui::EventArgs args) {
+	transformToolOpacitySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->translator.opacity = args.fValue;
 		editor->main->config.GetSection("options").Set("transform_tool_opacity", args.fValue);
 	});
@@ -240,7 +240,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	{
 		bonePickerOpacitySlider.SetValue(editor->main->config.GetSection("options").GetFloat("bone_picker_opacity"));
 	}
-	bonePickerOpacitySlider.OnSlide([=](wi::gui::EventArgs args) {
+	bonePickerOpacitySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("options").Set("bone_picker_opacity", args.fValue);
 	});
 	AddWidget(&bonePickerOpacitySlider);
@@ -258,7 +258,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 		params.type = wi::helper::FileDialogParams::SAVE;
 		params.description = "XML file (.xml)";
 		params.extensions.push_back("xml");
-		wi::helper::FileDialog(params, [=](std::string fileName) {
+		wi::helper::FileDialog(params, [=, this](std::string fileName) {
 			editor->GetGUI().ExportLocalization(editor->current_localization);
 			std::string filenameExt = wi::helper::ForceExtension(fileName, params.extensions.back());
 			editor->current_localization.Export(filenameExt);
@@ -273,7 +273,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	languageCombo.AddItem("English");
 	languageCombo.SetColor(wi::Color(50, 180, 100, 180), wi::gui::IDLE);
 	languageCombo.SetColor(wi::Color(50, 220, 140, 255), wi::gui::FOCUS);
-	languageCombo.OnSelect([=](wi::gui::EventArgs args) {
+	languageCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		if (args.iValue == 0)
 		{
 			editor->SetLocalization(editor->default_localization);
@@ -319,7 +319,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	themeCombo.AddItem("Soft " ICON_SOFT, (uint64_t)Theme::Soft);
 	themeCombo.AddItem("Hacking " ICON_HACKING, (uint64_t)Theme::Hacking);
 	themeCombo.AddItem("Nord " ICON_NORD, (uint64_t)Theme::Nord);
-	themeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	themeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 
 		// Dark theme defaults:
 		wi::Color theme_color_idle = wi::Color(30, 40, 60, 200);
@@ -420,7 +420,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 			gui.SetColor(wi::Color(0, 200, 90, 255), wi::gui::WIDGET_ID_SLIDER_KNOB_IDLE);
 			gui.SetColor(wi::Color(0, 200, 90, 255), wi::gui::WIDGET_ID_SCROLLBAR_KNOB_INACTIVE);
 		}
-		
+
 		if ((Theme)args.userdata == Theme::Nord)
 		{
 			gui.SetColor(wi::Color(136, 192, 208, 255), wi::gui::WIDGET_ID_SLIDER_KNOB_IDLE);
@@ -717,7 +717,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	eliminateCoarseCascadesButton.Create("EliminateCoarseCascades");
 	eliminateCoarseCascadesButton.SetTooltip("Eliminate the coarse cascade mask for every object in the scene.");
 	eliminateCoarseCascadesButton.SetSize(XMFLOAT2(100, 18));
-	eliminateCoarseCascadesButton.OnClick([=](wi::gui::EventArgs args) {
+	eliminateCoarseCascadesButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		Scene& scene = editor->GetCurrentScene();
 		for (size_t i = 0; i < scene.objects.GetCount(); ++i)
@@ -732,7 +732,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	ddsConvButton.Create("DDS Convert");
 	ddsConvButton.SetTooltip("All material textures in the scene will be converted to DDS format.\nDDS format is optimal for GPU and can be streamed.");
 	ddsConvButton.SetSize(XMFLOAT2(100, 18));
-	ddsConvButton.OnClick([=](wi::gui::EventArgs args) {
+	ddsConvButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		Scene& scene = editor->GetCurrentScene();
 
@@ -777,7 +777,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	ktxConvButton.Create("KTX2 Convert");
 	ktxConvButton.SetTooltip("All material textures in the scene will be converted to KTX2 format.\nTHIS MIGHT TAKE LONG, SO GET YOURSELF A COFFEE OR TEA!");
 	ktxConvButton.SetSize(XMFLOAT2(100, 18));
-	ktxConvButton.OnClick([=](wi::gui::EventArgs args) {
+	ktxConvButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		Scene& scene = editor->GetCurrentScene();
 

@@ -11,7 +11,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(480, 280));
 
 	closeButton.SetTooltip("Delete TransformComponent\nNote that a lot of components won't work correctly without a TransformComponent!");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -36,7 +36,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	clearButton.SetTooltip("Reset transform to identity");
 	clearButton.SetPos(XMFLOAT2(x, y));
 	clearButton.SetSize(XMFLOAT2(wid + hei + 1, hei));
-	clearButton.OnClick([=](wi::gui::EventArgs args) {
+	clearButton.OnClick([=, this](wi::gui::EventArgs args) {
 		TransformComponent* transform = editor->GetCurrentScene().transforms.GetComponent(entity);
 		if (transform != nullptr)
 		{
@@ -303,7 +303,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	snapScaleInput.SetPos(XMFLOAT2(x, y += step));
 	snapScaleInput.SetSize(XMFLOAT2(siz, hei));
 	snapScaleInput.SetValue(editor->translator.scale_snap);
-	snapScaleInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	snapScaleInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		editor->translator.scale_snap = args.fValue;
 		});
 	AddWidget(&snapScaleInput);
@@ -314,7 +314,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	snapRotateInput.SetPos(XMFLOAT2(x, y += step));
 	snapRotateInput.SetSize(XMFLOAT2(siz, hei));
 	snapRotateInput.SetValue(editor->translator.rotate_snap / XM_PI * 180);
-	snapRotateInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	snapRotateInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		editor->translator.rotate_snap = args.fValue / 180.0f * XM_PI;
 		});
 	AddWidget(&snapRotateInput);
@@ -325,7 +325,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	snapTranslateInput.SetPos(XMFLOAT2(x, y += step));
 	snapTranslateInput.SetSize(XMFLOAT2(siz, hei));
 	snapTranslateInput.SetValue(editor->translator.translate_snap);
-	snapTranslateInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	snapTranslateInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		editor->translator.translate_snap = args.fValue;
 		});
 	AddWidget(&snapTranslateInput);
@@ -334,7 +334,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	resetTranslationButton.SetText("X");
 	resetTranslationButton.SetTooltip("Reset translation");
 	resetTranslationButton.SetSize(XMFLOAT2(hei, hei));
-	resetTranslationButton.OnClick([=](wi::gui::EventArgs args) {
+	resetTranslationButton.OnClick([=, this](wi::gui::EventArgs args) {
 		TransformComponent* transform = editor->GetCurrentScene().transforms.GetComponent(entity);
 		if (transform != nullptr)
 		{
@@ -348,7 +348,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	resetScaleButton.SetText("X");
 	resetScaleButton.SetTooltip("Reset scale");
 	resetScaleButton.SetSize(XMFLOAT2(hei, hei));
-	resetScaleButton.OnClick([=](wi::gui::EventArgs args) {
+	resetScaleButton.OnClick([=, this](wi::gui::EventArgs args) {
 		TransformComponent* transform = editor->GetCurrentScene().transforms.GetComponent(entity);
 		if (transform != nullptr)
 		{
@@ -362,7 +362,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	resetScaleUniformButton.SetText("X");
 	resetScaleUniformButton.SetTooltip("Reset scale");
 	resetScaleUniformButton.SetSize(XMFLOAT2(hei, hei));
-	resetScaleUniformButton.OnClick([=](wi::gui::EventArgs args) {
+	resetScaleUniformButton.OnClick([=, this](wi::gui::EventArgs args) {
 		TransformComponent* transform = editor->GetCurrentScene().transforms.GetComponent(entity);
 		if (transform != nullptr)
 		{
@@ -376,7 +376,7 @@ void TransformWindow::Create(EditorComponent* _editor)
 	resetRotationButton.SetText("X");
 	resetRotationButton.SetTooltip("Reset rotation");
 	resetRotationButton.SetSize(XMFLOAT2(hei, hei));
-	resetRotationButton.OnClick([=](wi::gui::EventArgs args) {
+	resetRotationButton.OnClick([=, this](wi::gui::EventArgs args) {
 		TransformComponent* transform = editor->GetCurrentScene().transforms.GetComponent(entity);
 		if (transform != nullptr)
 		{

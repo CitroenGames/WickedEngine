@@ -38,7 +38,7 @@ void SoundWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(440, 400));
 
 	closeButton.SetTooltip("Delete SoundComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -70,8 +70,8 @@ void SoundWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Sound (.wav, .ogg)";
 			params.extensions = wi::resourcemanager::GetSupportedSoundExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					wi::scene::Scene& scene = editor->GetCurrentScene();
 					for (auto& x : editor->translator.selected)
 					{

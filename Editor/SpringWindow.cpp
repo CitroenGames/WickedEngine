@@ -11,7 +11,7 @@ void SpringWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(460, 220));
 
 	closeButton.SetTooltip("Delete SpringComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -47,7 +47,7 @@ void SpringWindow::Create(EditorComponent* _editor)
 	disabledCheckBox.SetTooltip("Disable simulation.");
 	disabledCheckBox.SetPos(XMFLOAT2(x, y += step));
 	disabledCheckBox.SetSize(XMFLOAT2(hei, hei));
-	disabledCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	disabledCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -63,7 +63,7 @@ void SpringWindow::Create(EditorComponent* _editor)
 	gravityCheckBox.SetTooltip("Whether global gravity should affect the spring");
 	gravityCheckBox.SetPos(XMFLOAT2(x, y += step));
 	gravityCheckBox.SetSize(XMFLOAT2(hei, hei));
-	gravityCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	gravityCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

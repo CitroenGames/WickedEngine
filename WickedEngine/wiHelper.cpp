@@ -1117,7 +1117,7 @@ namespace wi::helper
 	void FileDialog(const FileDialogParams& params, std::function<void(std::string fileName)> onSuccess)
 	{
 #ifdef PLATFORM_WINDOWS_DESKTOP
-		std::thread([=] {
+		std::thread([=, this] {
 
 			wchar_t szFile[256];
 
@@ -1126,7 +1126,7 @@ namespace wi::helper
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = nullptr;
 			ofn.lpstrFile = szFile;
-			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 			// use the contents of szFile to initialize itself.
 			ofn.lpstrFile[0] = '\0';
 			ofn.nMaxFile = sizeof(szFile);
@@ -1385,7 +1385,7 @@ namespace wi::helper
 		return num;
 #endif // _WIN32
 	}
-	
+
 	void DebugOut(const std::string& str, DebugLevel level)
 	{
 #ifdef _WIN32
@@ -1410,7 +1410,7 @@ namespace wi::helper
 	}
 #endif // _WIN32
 	}
-	
+
 	void Sleep(float milliseconds)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)milliseconds));

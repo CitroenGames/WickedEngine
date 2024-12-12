@@ -775,7 +775,7 @@ int Scene_BindLua::FindAllEntities(lua_State* L)
 {
 	wi::unordered_set<wi::ecs::Entity> listOfAllEntities;
 	scene->FindAllEntities(listOfAllEntities);
-		
+
 	int idx = 1; // lua indexes start at 1
 
 	lua_createtable(L, (int)listOfAllEntities.size(), 0); // fixed size table
@@ -865,7 +865,7 @@ int Scene_BindLua::Entity_Remove_Async(lua_State* L)
 			}
 		}
 
-		wi::jobsystem::Execute(async->ctx, [=](wi::jobsystem::JobArgs args) {
+		wi::jobsystem::Execute(async->ctx, [=, this](wi::jobsystem::JobArgs args) {
 			scene->Entity_Remove(entity, recursive, keep_sorted);
 		});
 	}
@@ -3549,7 +3549,7 @@ int TransformComponent_BindLua::Scale(lua_State* L)
 		{
 			XMFLOAT3 value;
 			XMStoreFloat3(&value, XMLoadFloat4(&v->data));
-			
+
 			component->Scale(value);
 		}
 		else
@@ -4464,7 +4464,7 @@ Luna<MaterialComponent_BindLua>::FunctionType MaterialComponent_BindLua::methods
 };
 Luna<MaterialComponent_BindLua>::PropertyType MaterialComponent_BindLua::properties[] = {
 	lunaproperty(MaterialComponent_BindLua, _flags),
-	
+
 	lunaproperty(MaterialComponent_BindLua, BaseColor),
 	lunaproperty(MaterialComponent_BindLua, EmissiveColor),
 	lunaproperty(MaterialComponent_BindLua, EngineStencilRef),
@@ -4875,9 +4875,9 @@ Luna<EmitterComponent_BindLua>::FunctionType EmitterComponent_BindLua::methods[]
 };
 Luna<EmitterComponent_BindLua>::PropertyType EmitterComponent_BindLua::properties[] = {
 	lunaproperty(EmitterComponent_BindLua, _flags),
-	
+
 	lunaproperty(EmitterComponent_BindLua, ShaderType),
-	
+
 	lunaproperty(EmitterComponent_BindLua, Mass),
 	lunaproperty(EmitterComponent_BindLua, Velocity),
 	lunaproperty(EmitterComponent_BindLua, Gravity),
@@ -6812,7 +6812,7 @@ int SoundComponent_BindLua::SetLooped(lua_State* L)
 	{
 		bool value = wi::lua::SGetBool(L, 1);
 	}
-	
+
 	component->SetLooped(value);
 
 	return 0;
@@ -6827,7 +6827,7 @@ int SoundComponent_BindLua::SetDisable3D(lua_State* L)
 		bool value = wi::lua::SGetBool(L, 1);
 		component->SetLooped();
 	}
-	
+
 	component->SetDisable3D(value);
 
 	return 0;

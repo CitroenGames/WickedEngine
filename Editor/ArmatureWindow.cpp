@@ -12,7 +12,7 @@ void ArmatureWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 380));
 
 	closeButton.SetTooltip("Delete ArmatureComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -39,7 +39,7 @@ void ArmatureWindow::Create(EditorComponent* _editor)
 	resetPoseButton.Create("Reset Pose");
 	resetPoseButton.SetTooltip("Reset Pose will be performed on the Armature, based on the bone inverse bind matrices.");
 	resetPoseButton.SetSize(XMFLOAT2(wid, hei));
-	resetPoseButton.OnClick([=](wi::gui::EventArgs args) {
+	resetPoseButton.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		scene.ResetPose(entity);
 	});
@@ -48,7 +48,7 @@ void ArmatureWindow::Create(EditorComponent* _editor)
 	createHumanoidButton.Create("Try to create humanoid rig");
 	createHumanoidButton.SetTooltip("Tries to create a humanoid component based on bone naming convention.\nIt supports the VRM and Mixamo naming convention.");
 	createHumanoidButton.SetSize(XMFLOAT2(wid, hei));
-	createHumanoidButton.OnClick([=](wi::gui::EventArgs args) {
+	createHumanoidButton.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		if (scene.humanoids.Contains(entity))
 		{
@@ -172,7 +172,7 @@ void ArmatureWindow::Create(EditorComponent* _editor)
 	boneList.Create("Bones: ");
 	boneList.SetSize(XMFLOAT2(wid, 200));
 	boneList.SetPos(XMFLOAT2(4, y += step));
-	boneList.OnSelect([=](wi::gui::EventArgs args) {
+	boneList.OnSelect([=, this](wi::gui::EventArgs args) {
 
 		if (args.iValue < 0)
 			return;

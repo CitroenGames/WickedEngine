@@ -11,7 +11,7 @@ void IKWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(400, 120));
 
 	closeButton.SetTooltip("Delete InverseKinematicsComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -58,7 +58,7 @@ void IKWindow::Create(EditorComponent* _editor)
 	disabledCheckBox.SetTooltip("Disable simulation.");
 	disabledCheckBox.SetPos(XMFLOAT2(x, y += step));
 	disabledCheckBox.SetSize(XMFLOAT2(hei, hei));
-	disabledCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	disabledCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

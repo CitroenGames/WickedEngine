@@ -11,7 +11,7 @@ void NameWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(360, 60));
 
 	closeButton.SetTooltip("Delete NameComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -34,7 +34,7 @@ void NameWindow::Create(EditorComponent* _editor)
 	nameInput.SetDescription("Name: ");
 	nameInput.SetPos(XMFLOAT2(x, y));
 	nameInput.SetSize(XMFLOAT2(siz, hei));
-	nameInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	nameInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

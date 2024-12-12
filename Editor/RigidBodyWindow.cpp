@@ -12,7 +12,7 @@ void RigidBodyWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 440));
 
 	closeButton.SetTooltip("Delete RigidBodyPhysicsComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;

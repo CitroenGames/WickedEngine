@@ -25,7 +25,7 @@ void ProfilerWindow::Create()
 {
 	Window::Create("Profiler", wi::gui::Window::WindowControls::ALL);
 
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 		wi::profiler::SetEnabled(false);
 	});
 

@@ -10,7 +10,7 @@ void SpriteRectWindow::Create(EditorComponent* editor)
 	SetSize(XMFLOAT2(300, 300));
 
 	spriteButton.Create("");
-	spriteButton.OnDragStart([=](wi::gui::EventArgs args) {
+	spriteButton.OnDragStart([=, this](wi::gui::EventArgs args) {
 		XMFLOAT2 pos = spriteButton.GetPos();
 		XMFLOAT2 size = spriteButton.GetSize();
 		dragStartUV = wi::math::InverseLerp(pos, XMFLOAT2(pos.x + size.x, pos.y + size.y), args.clickPos);
@@ -18,14 +18,14 @@ void SpriteRectWindow::Create(EditorComponent* editor)
 		dragStartUV.y = saturate(dragStartUV.y);
 		dragEndUV = dragStartUV;
 	});
-	spriteButton.OnDrag([=](wi::gui::EventArgs args) {
+	spriteButton.OnDrag([=, this](wi::gui::EventArgs args) {
 		XMFLOAT2 pos = spriteButton.GetPos();
 		XMFLOAT2 size = spriteButton.GetSize();
 		dragEndUV = wi::math::InverseLerp(pos, XMFLOAT2(pos.x + size.x, pos.y + size.y), args.clickPos);
 		dragEndUV.x = saturate(dragEndUV.x);
 		dragEndUV.y = saturate(dragEndUV.y);
 	});
-	spriteButton.OnDragEnd([=](wi::gui::EventArgs args) {
+	spriteButton.OnDragEnd([=, this](wi::gui::EventArgs args) {
 		XMFLOAT2 pos = spriteButton.GetPos();
 		XMFLOAT2 size = spriteButton.GetSize();
 		dragEndUV = wi::math::InverseLerp(pos, XMFLOAT2(pos.x + size.x, pos.y + size.y), args.clickPos);
@@ -42,7 +42,7 @@ void SpriteRectWindow::Create(EditorComponent* editor)
 	AddWidget(&spriteButton);
 
 	okButton.Create("OK");
-	okButton.OnClick([=](wi::gui::EventArgs args) {
+	okButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		if (onAccepted != nullptr)
 			onAccepted();

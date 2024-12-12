@@ -13,7 +13,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 1540));
 
 	closeButton.SetTooltip("Delete Sprite");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -59,7 +59,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 				params.type = wi::helper::FileDialogParams::OPEN;
 				params.description = "Texture";
 				params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-				wi::helper::FileDialog(params, [=](std::string fileName) {
+				wi::helper::FileDialog(params, [=, this](std::string fileName) {
 					sprite->textureResource = wi::resourcemanager::Load(fileName);
 					sprite->textureName = fileName;
 					textureButton.SetImage(sprite->textureResource);
@@ -109,7 +109,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 				params.type = wi::helper::FileDialogParams::OPEN;
 				params.description = "Texture";
 				params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
-				wi::helper::FileDialog(params, [=](std::string fileName) {
+				wi::helper::FileDialog(params, [=, this](std::string fileName) {
 					sprite->maskResource = wi::resourcemanager::Load(fileName);
 					sprite->maskName = fileName;
 					maskButton.SetImage(sprite->maskResource);
@@ -121,7 +121,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	pivotXSlider.Create(0, 1, 0, 10000, "Pivot X: ");
 	pivotXSlider.SetTooltip("Horizontal pivot: 0: left, 0.5: center, 1: right");
-	pivotXSlider.OnSlide([=](wi::gui::EventArgs args) {
+	pivotXSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -135,7 +135,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	pivotYSlider.Create(0, 1, 0, 10000, "Pivot Y: ");
 	pivotYSlider.SetTooltip("Vertical pivot: 0: top, 0.5: center, 1: bottom");
-	pivotYSlider.OnSlide([=](wi::gui::EventArgs args) {
+	pivotYSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -149,7 +149,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	intensitySlider.Create(0, 100, 1, 10000, "Intensity: ");
 	intensitySlider.SetTooltip("Color multiplier");
-	intensitySlider.OnSlide([=](wi::gui::EventArgs args) {
+	intensitySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -163,7 +163,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	rotationSlider.Create(0, 360, 0, 10000, "Rotation: ");
 	rotationSlider.SetTooltip("Z Rotation around pivot point. The editor input is in degrees.");
-	rotationSlider.OnSlide([=](wi::gui::EventArgs args) {
+	rotationSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -177,7 +177,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	saturationSlider.Create(0, 2, 1, 1000, "Saturation: ");
 	saturationSlider.SetTooltip("Modify saturation of the image.");
-	saturationSlider.OnSlide([=](wi::gui::EventArgs args) {
+	saturationSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -191,7 +191,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	alphaStartSlider.Create(0, 1, 0, 10000, "Mask Alpha Start: ");
 	alphaStartSlider.SetTooltip("Constrain mask alpha to not go below this level.");
-	alphaStartSlider.OnSlide([=](wi::gui::EventArgs args) {
+	alphaStartSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -205,7 +205,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	alphaEndSlider.Create(0, 1, 1, 10000, "Mask Alpha End: ");
 	alphaEndSlider.SetTooltip("Constrain mask alpha to not go above this level.");
-	alphaEndSlider.OnSlide([=](wi::gui::EventArgs args) {
+	alphaEndSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -219,7 +219,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	borderSoftenSlider.Create(0, 1, 0, 10000, "Border Soften: ");
 	borderSoftenSlider.SetTooltip("Soften the borders of the sprite.");
-	borderSoftenSlider.OnSlide([=](wi::gui::EventArgs args) {
+	borderSoftenSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -233,7 +233,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cornerRounding0Slider.Create(0, 0.5f, 1, 10000, "Rounding 0: ");
 	cornerRounding0Slider.SetTooltip("Enable corner rounding for the lop left corner.");
-	cornerRounding0Slider.OnSlide([=](wi::gui::EventArgs args) {
+	cornerRounding0Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -247,7 +247,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cornerRounding1Slider.Create(0, 0.5f, 0, 10000, "Rounding 1: ");
 	cornerRounding1Slider.SetTooltip("Enable corner rounding for the lop right corner.");
-	cornerRounding1Slider.OnSlide([=](wi::gui::EventArgs args) {
+	cornerRounding1Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -261,7 +261,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cornerRounding2Slider.Create(0, 0.5f, 0, 10000, "Rounding 2: ");
 	cornerRounding2Slider.SetTooltip("Enable corner rounding for the bottom left corner.");
-	cornerRounding2Slider.OnSlide([=](wi::gui::EventArgs args) {
+	cornerRounding2Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -275,7 +275,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cornerRounding3Slider.Create(0, 0.5f, 0, 10000, "Rounding 3: ");
 	cornerRounding3Slider.SetTooltip("Enable corner rounding for the bottom right corner.");
-	cornerRounding3Slider.OnSlide([=](wi::gui::EventArgs args) {
+	cornerRounding3Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -291,7 +291,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	qualityCombo.AddItem("Nearest Neighbor", wi::image::QUALITY_NEAREST);
 	qualityCombo.AddItem("Linear", wi::image::QUALITY_LINEAR);
 	qualityCombo.AddItem("Anisotropic", wi::image::QUALITY_ANISOTROPIC);
-	qualityCombo.OnSelect([=](wi::gui::EventArgs args) {
+	qualityCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -307,7 +307,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	samplemodeCombo.AddItem("Clamp", wi::image::SAMPLEMODE_CLAMP);
 	samplemodeCombo.AddItem("Mirror", wi::image::SAMPLEMODE_MIRROR);
 	samplemodeCombo.AddItem("Wrap", wi::image::SAMPLEMODE_WRAP);
-	samplemodeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	samplemodeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -325,7 +325,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	blendModeCombo.AddItem("Premultiplied", wi::enums::BLENDMODE_PREMULTIPLIED);
 	blendModeCombo.AddItem("Additive", wi::enums::BLENDMODE_ADDITIVE);
 	blendModeCombo.AddItem("Multiply", wi::enums::BLENDMODE_MULTIPLY);
-	blendModeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	blendModeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -339,7 +339,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	hiddenCheckBox.Create("Hidden: ");
 	hiddenCheckBox.SetTooltip("Hide / unhide the sprite");
-	hiddenCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	hiddenCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -353,7 +353,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cameraFacingCheckBox.Create("Camera Facing: ");
 	cameraFacingCheckBox.SetTooltip("Camera facing sprites will always rotate towards the camera.");
-	cameraFacingCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	cameraFacingCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -367,7 +367,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	cameraScalingCheckBox.Create("Camera Scaling: ");
 	cameraScalingCheckBox.SetTooltip("Camera scaling sprites will always keep the same size on screen, irrespective of the distance to the camera.");
-	cameraScalingCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	cameraScalingCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -381,7 +381,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	depthTestCheckBox.Create("Depth Test: ");
 	depthTestCheckBox.SetTooltip("Depth tested sprites will be clipped against geometry.");
-	depthTestCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	depthTestCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -402,7 +402,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	distortionCheckBox.Create("Distortion: ");
 	distortionCheckBox.SetTooltip("The distortion effect will use the sprite as a normal map to distort the rendered image.\nUse the color alpha to control distortion amount.");
-	distortionCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	distortionCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -436,7 +436,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	movingTexXSlider.Create(-1000, 1000, 0, 10000, "Scrolling X: ");
 	movingTexXSlider.SetTooltip("Scrolling animation's speed in X direction.");
-	movingTexXSlider.OnSlide([=](wi::gui::EventArgs args) {
+	movingTexXSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -450,7 +450,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	movingTexYSlider.Create(-1000, 1000, 0, 10000, "Scrolling Y: ");
 	movingTexYSlider.SetTooltip("Scrolling animation's speed in Y direction.");
-	movingTexYSlider.OnSlide([=](wi::gui::EventArgs args) {
+	movingTexYSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -464,7 +464,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	drawrectFrameRateSlider.Create(0, 60, 0, 60, "Spritesheet FPS: ");
 	drawrectFrameRateSlider.SetTooltip("Sprite Sheet animation's frame rate per second.");
-	drawrectFrameRateSlider.OnSlide([=](wi::gui::EventArgs args) {
+	drawrectFrameRateSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -480,7 +480,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	drawrectFrameCountInput.Create("");
 	drawrectFrameCountInput.SetDescription("frames: ");
 	drawrectFrameCountInput.SetTooltip("Set the total frame count of the sprite sheet animation (1 = only 1 frame, no animation).");
-	drawrectFrameCountInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	drawrectFrameCountInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -496,7 +496,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 	drawrectHorizontalFrameCountInput.Create("");
 	drawrectHorizontalFrameCountInput.SetDescription("Horiz. frames: ");
 	drawrectHorizontalFrameCountInput.SetTooltip("Set the horizontal frame count of the sprite sheet animation.\n(optional, use if sprite sheet contains multiple rows, default = 0).");
-	drawrectHorizontalFrameCountInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	drawrectHorizontalFrameCountInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -511,7 +511,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	wobbleXSlider.Create(0, 1, 0, 10000, "Wobble X: ");
 	wobbleXSlider.SetTooltip("Wobble animation's amount in X direction.");
-	wobbleXSlider.OnSlide([=](wi::gui::EventArgs args) {
+	wobbleXSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -525,7 +525,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	wobbleYSlider.Create(0, 1, 0, 10000, "Wobble Y: ");
 	wobbleYSlider.SetTooltip("Wobble animation's amount in X direction.");
-	wobbleYSlider.OnSlide([=](wi::gui::EventArgs args) {
+	wobbleYSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -539,7 +539,7 @@ void SpriteWindow::Create(EditorComponent* _editor)
 
 	wobbleSpeedSlider.Create(0, 4, 0, 10000, "Wobble Speed: ");
 	wobbleSpeedSlider.SetTooltip("Wobble animation's speed.");
-	wobbleSpeedSlider.OnSlide([=](wi::gui::EventArgs args) {
+	wobbleSpeedSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

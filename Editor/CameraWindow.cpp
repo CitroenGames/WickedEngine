@@ -169,7 +169,7 @@ void CameraWindow::Create(EditorComponent* _editor)
 	{
 		movespeedSlider.SetValue(editor->main->config.GetSection("camera").GetFloat("move_speed"));
 	}
-	movespeedSlider.OnSlide([=](wi::gui::EventArgs args) {
+	movespeedSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("camera").Set("move_speed", args.fValue);
 		editor->main->config.Commit();
 		});
@@ -182,7 +182,7 @@ void CameraWindow::Create(EditorComponent* _editor)
 	{
 		accelerationSlider.SetValue(editor->main->config.GetSection("camera").GetFloat("acceleration"));
 	}
-	accelerationSlider.OnSlide([=](wi::gui::EventArgs args) {
+	accelerationSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("camera").Set("acceleration", args.fValue);
 		editor->main->config.Commit();
 		});
@@ -195,7 +195,7 @@ void CameraWindow::Create(EditorComponent* _editor)
 	{
 		rotationspeedSlider.SetValue(editor->main->config.GetSection("camera").GetFloat("rotation_speed"));
 	}
-	rotationspeedSlider.OnSlide([=](wi::gui::EventArgs args) {
+	rotationspeedSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("camera").Set("rotation_speed", args.fValue);
 		editor->main->config.Commit();
 		});
@@ -247,7 +247,7 @@ void CameraWindow::Create(EditorComponent* _editor)
 	proxyButton.SetTooltip("Copy the current camera and place a proxy of it in the world.");
 	proxyButton.SetSize(XMFLOAT2(wid, hei));
 	proxyButton.SetPos(XMFLOAT2(x, y += step * 2));
-	proxyButton.OnClick([=](wi::gui::EventArgs args) {
+	proxyButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		const CameraComponent& camera = editor->GetCurrentEditorScene().camera;
 

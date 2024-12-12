@@ -625,8 +625,8 @@ void EditorComponent::Load()
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Sound";
 			params.extensions = wi::resourcemanager::GetSupportedSoundExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					Entity entity = GetCurrentScene().Entity_CreateSound(wi::helper::GetFileNameFromPath(fileName), fileName);
 
 					wi::Archive& archive = AdvanceHistory();
@@ -652,8 +652,8 @@ void EditorComponent::Load()
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Video";
 			params.extensions = wi::resourcemanager::GetSupportedVideoExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					Entity entity = GetCurrentScene().Entity_CreateVideo(wi::helper::GetFileNameFromPath(fileName), fileName);
 
 					wi::Archive& archive = AdvanceHistory();
@@ -873,7 +873,7 @@ void EditorComponent::Load()
 			params.description = ".lua";
 			params.extensions.push_back("lua");
 			wi::helper::FileDialog(params, [&](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 					std::string extension = wi::helper::toUpper(wi::helper::GetExtensionFromFileName(fileName));
 					if (!extension.compare("LUA"))
@@ -889,7 +889,7 @@ void EditorComponent::Load()
 		}
 		else
 		{
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 				wi::lua::RunFile(last_script_path);
 			});
 		}
@@ -967,7 +967,7 @@ void EditorComponent::Load()
 			params.extensions.push_back(x);
 		}
 		wi::helper::FileDialog(params, [&](std::string fileName) {
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 				Open(fileName);
 				});
 			});
@@ -1051,7 +1051,7 @@ void EditorComponent::Load()
 		main->config.Set("fullscreen", fullscreen);
 		main->config.Commit();
 
-		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t) {
+		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t) {
 
 			main->SetFullScreen(fullscreen);
 
@@ -4642,7 +4642,7 @@ void EditorComponent::Open(std::string filename)
 
 	size_t camera_count_prev = GetCurrentScene().cameras.GetCount();
 
-	wi::jobsystem::Execute(loadmodel_workload, [=] (wi::jobsystem::JobArgs) {
+	wi::jobsystem::Execute(loadmodel_workload, [=, this] (wi::jobsystem::JobArgs) {
 		wi::backlog::post("[Editor] started loading model: " + filename);
 		std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 		if (type == FileType::WISCENE)
@@ -4662,7 +4662,7 @@ void EditorComponent::Open(std::string filename)
 			ImportModel_FBX(filename, *scene);
 		}
 
-		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=] (uint64_t userdata) {
+		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this] (uint64_t userdata) {
 
 			if (type == FileType::WISCENE && GetCurrentEditorScene().path.empty())
 			{
@@ -4774,8 +4774,8 @@ void EditorComponent::SaveAs()
 	params.extensions.push_back("gltf");
 	params.extensions.push_back("glb");
 	params.extensions.push_back("h");
-	wi::helper::FileDialog(params, [=](std::string fileName) {
-		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+	wi::helper::FileDialog(params, [=, this](std::string fileName) {
+		wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 			auto extension = wi::helper::toUpper(wi::helper::GetExtensionFromFileName(fileName));
 			std::string filename = (!extension.compare("GLTF") || !extension.compare("GLB") || !extension.compare("H")) ? fileName : wi::helper::ForceExtension(fileName, params.extensions.front());
 			Save(filename);
@@ -5383,7 +5383,7 @@ void EditorComponent::RefreshSceneList()
 			ResetHistory();
 			scenes[i]->path.clear();
 
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 				if (scenes.size() > 1)
 				{
 					topmenuWnd.RemoveWidget(&scenes[i]->tabSelectButton);

@@ -16,7 +16,7 @@ ModifierWindow::ModifierWindow(const std::string& name)
 	blendCombo.AddItem("Normal", (uint64_t)wi::terrain::Modifier::BlendMode::Normal);
 	blendCombo.AddItem("Additive", (uint64_t)wi::terrain::Modifier::BlendMode::Additive);
 	blendCombo.AddItem("Multiply", (uint64_t)wi::terrain::Modifier::BlendMode::Multiply);
-	blendCombo.OnSelect([=](wi::gui::EventArgs args) {
+	blendCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		modifier->blend = (wi::terrain::Modifier::BlendMode)args.userdata;
 		generation_callback();
 		});
@@ -25,7 +25,7 @@ ModifierWindow::ModifierWindow(const std::string& name)
 	weightSlider.Create(0, 1, 0.5f, 10000, "Weight: ");
 	weightSlider.SetSize(XMFLOAT2(100, 20));
 	weightSlider.SetTooltip("Blending amount");
-	weightSlider.OnSlide([=](wi::gui::EventArgs args) {
+	weightSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		modifier->weight = args.fValue;
 		generation_callback();
 		});
@@ -34,7 +34,7 @@ ModifierWindow::ModifierWindow(const std::string& name)
 	frequencySlider.Create(0.0001f, 0.01f, 0.0008f, 10000, "Frequency: ");
 	frequencySlider.SetSize(XMFLOAT2(100, 20));
 	frequencySlider.SetTooltip("Frequency for the tiling");
-	frequencySlider.OnSlide([=](wi::gui::EventArgs args) {
+	frequencySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		modifier->frequency = args.fValue;
 		generation_callback();
 		});
@@ -60,7 +60,7 @@ PerlinModifierWindow::PerlinModifierWindow() : ModifierWindow("Perlin Noise")
 	octavesSlider.Create(1, 8, 6, 7, "Octaves: ");
 	octavesSlider.SetTooltip("Octave count for the perlin noise");
 	octavesSlider.SetSize(XMFLOAT2(100, 20));
-	octavesSlider.OnSlide([=](wi::gui::EventArgs args) {
+	octavesSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::PerlinModifier*)modifier)->octaves = args.iValue;
 		generation_callback();
 		});
@@ -107,7 +107,7 @@ VoronoiModifierWindow::VoronoiModifierWindow() : ModifierWindow("Voronoi Noise")
 	fadeSlider.Create(0, 100, 2.59f, 10000, "Fade: ");
 	fadeSlider.SetTooltip("Fade out voronoi regions by distance from cell's center");
 	fadeSlider.SetSize(XMFLOAT2(100, 20));
-	fadeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	fadeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::VoronoiModifier*)modifier)->fade = args.fValue;
 		generation_callback();
 		});
@@ -116,7 +116,7 @@ VoronoiModifierWindow::VoronoiModifierWindow() : ModifierWindow("Voronoi Noise")
 	shapeSlider.Create(0, 1, 0.7f, 10000, "Shape: ");
 	shapeSlider.SetTooltip("How much the voronoi shape will be kept");
 	shapeSlider.SetSize(XMFLOAT2(100, 20));
-	shapeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	shapeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::VoronoiModifier*)modifier)->shape = args.fValue;
 		generation_callback();
 		});
@@ -125,7 +125,7 @@ VoronoiModifierWindow::VoronoiModifierWindow() : ModifierWindow("Voronoi Noise")
 	falloffSlider.Create(0, 8, 6, 10000, "Falloff: ");
 	falloffSlider.SetTooltip("Controls the falloff of the voronoi distance fade effect");
 	falloffSlider.SetSize(XMFLOAT2(100, 20));
-	falloffSlider.OnSlide([=](wi::gui::EventArgs args) {
+	falloffSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::VoronoiModifier*)modifier)->falloff = args.fValue;
 		generation_callback();
 		});
@@ -134,7 +134,7 @@ VoronoiModifierWindow::VoronoiModifierWindow() : ModifierWindow("Voronoi Noise")
 	perturbationSlider.Create(0, 1, 0.1f, 10000, "Perturbation: ");
 	perturbationSlider.SetTooltip("Controls the random look of voronoi region edges");
 	perturbationSlider.SetSize(XMFLOAT2(100, 20));
-	perturbationSlider.OnSlide([=](wi::gui::EventArgs args) {
+	perturbationSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::VoronoiModifier*)modifier)->perturbation = args.fValue;
 		generation_callback();
 		});
@@ -192,7 +192,7 @@ HeightmapModifierWindow::HeightmapModifierWindow() : ModifierWindow("Heightmap")
 
 	scaleSlider.Create(0, 1, 0.1f, 1000, "Scale: ");
 	scaleSlider.SetSize(XMFLOAT2(100, 20));
-	scaleSlider.OnSlide([=](wi::gui::EventArgs args) {
+	scaleSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		((wi::terrain::HeightmapModifier*)modifier)->scale = args.fValue;
 		generation_callback();
 		});
@@ -200,14 +200,14 @@ HeightmapModifierWindow::HeightmapModifierWindow() : ModifierWindow("Heightmap")
 
 	loadButton.Create("Load Heightmap...");
 	loadButton.SetTooltip("Load a heightmap texture, where the red channel corresponds to terrain height and the resolution to dimensions.\nThe heightmap will be placed in the world center.\nIt is recommended to use a 16-bit PNG for heightmaps.");
-	loadButton.OnClick([=](wi::gui::EventArgs args) {
+	loadButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		wi::helper::FileDialogParams params;
 		params.type = wi::helper::FileDialogParams::OPEN;
 		params.description = "*.png";
 		params.extensions = { "PNG" };
-		wi::helper::FileDialog(params, [=](std::string fileName) {
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+		wi::helper::FileDialog(params, [=, this](std::string fileName) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 				auto* heightmap_modifier = (wi::terrain::HeightmapModifier*)modifier;
 				heightmap_modifier->data.clear();
@@ -337,7 +337,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	}
 	AddWidget(&meshCombo);
 
-	meshCombo.OnSelect([=](wi::gui::EventArgs args) {
+	meshCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		if(args.userdata == entity)
 		{
 			return;
@@ -392,7 +392,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	regionCombo.AddItem("Slopes", 1);
 	regionCombo.AddItem("Low altitude ", 2);
 	regionCombo.AddItem("High altitude", 3);
-	regionCombo.OnSelect([=](wi::gui::EventArgs args) {
+	regionCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		prop->region = static_cast<int>(args.userdata);
 		generation_callback();
 	});
@@ -401,7 +401,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	regionPowerSlider.Create(0.0f, 1.0f, 1.0f, 1000, "Region power: ");
 	regionPowerSlider.SetSize(elementSize);
 	regionPowerSlider.SetTooltip("Region weight affection power factor");
-	regionPowerSlider.OnSlide([=](wi::gui::EventArgs args) {
+	regionPowerSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->region_power = args.fValue;
 		generation_callback();
 		});
@@ -410,7 +410,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	noiseFrequencySlider.Create(0.0f, 1.0f, 1.0f, 1000, "Noise frequency: ");
 	noiseFrequencySlider.SetSize(elementSize);
 	noiseFrequencySlider.SetTooltip("Perlin noise's frequency for placement factor");
-	noiseFrequencySlider.OnSlide([=](wi::gui::EventArgs args) {
+	noiseFrequencySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->noise_frequency = args.fValue;
 		generation_callback();
 		});
@@ -419,7 +419,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	noisePowerSlider.Create(0.0f, 1.0f, 1.0f, 1000, "Noise pwer: ");
 	noisePowerSlider.SetSize(elementSize);
 	noisePowerSlider.SetTooltip("Perlin noise's power");
-	noisePowerSlider.OnSlide([=](wi::gui::EventArgs args) {
+	noisePowerSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->noise_power = args.fValue;
 		generation_callback();
 		});
@@ -428,7 +428,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	thresholdSlider.Create(0.0f, 1.0f, 0.5f, 1000, "Threshold: ");
 	thresholdSlider.SetSize(elementSize);
 	thresholdSlider.SetTooltip("The chance of placement (higher is less chance)");
-	thresholdSlider.OnSlide([=](wi::gui::EventArgs args) {
+	thresholdSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->threshold = args.fValue;
 		generation_callback();
 	});
@@ -437,7 +437,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	minSizeSlider.Create(0.0f, 1.0f, 1.0f, 1000, "Min size: ");
 	minSizeSlider.SetSize(elementSize);
 	minSizeSlider.SetTooltip("Scaling randomization range min");
-	minSizeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	minSizeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->min_size = std::min(args.fValue, prop->max_size);
 		generation_callback();
 	});
@@ -446,7 +446,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	maxSizeSlider.Create(0.0f, 1.0f, 1.0f, 1000, "Max size: ");
 	maxSizeSlider.SetSize(elementSize);
 	maxSizeSlider.SetTooltip("Scaling randomization range max");
-	maxSizeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	maxSizeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		prop->max_size = std::max(args.fValue, prop->min_size);
 		generation_callback();
 	});
@@ -457,7 +457,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	minYOffsetInput.SetSize(elementSize);
 	minYOffsetInput.SetValue(0);
 	minYOffsetInput.SetTooltip("Minimal randomized offset on vertical axis");
-	minYOffsetInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	minYOffsetInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		prop->min_y_offset = std::min(args.fValue, prop->max_y_offset);
 		generation_callback();
 	});
@@ -468,7 +468,7 @@ PropWindow::PropWindow(wi::terrain::Prop* prop, wi::scene::Scene* scene)
 	maxYOffsetInput.SetSize(elementSize);
 	maxYOffsetInput.SetValue(0);
 	maxYOffsetInput.SetTooltip("Maximum randomized offset on vertical axis");
-	maxYOffsetInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	maxYOffsetInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		prop->max_y_offset = std::max(args.fValue, prop->min_y_offset);
 		generation_callback();
 	});
@@ -665,7 +665,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(420, 1000));
 
 	closeButton.SetTooltip("Delete Terrain.");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -713,7 +713,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	centerToCamCheckBox.SetSize(XMFLOAT2(hei, hei));
 	centerToCamCheckBox.SetPos(XMFLOAT2(x, y));
 	centerToCamCheckBox.SetCheck(true);
-	centerToCamCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	centerToCamCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		terrain->SetCenterToCamEnabled(args.bValue);
 		});
 	AddWidget(&centerToCamCheckBox);
@@ -723,7 +723,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	removalCheckBox.SetSize(XMFLOAT2(hei, hei));
 	removalCheckBox.SetPos(XMFLOAT2(x + 100, y));
 	removalCheckBox.SetCheck(true);
-	removalCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	removalCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		terrain->SetRemovalEnabled(args.bValue);
 		});
 	AddWidget(&removalCheckBox);
@@ -733,7 +733,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	grassCheckBox.SetSize(XMFLOAT2(hei, hei));
 	grassCheckBox.SetPos(XMFLOAT2(x, y += step));
 	grassCheckBox.SetCheck(true);
-	grassCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	grassCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		terrain->SetGrassEnabled(args.bValue);
 		});
 	AddWidget(&grassCheckBox);
@@ -743,7 +743,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	physicsCheckBox.SetSize(XMFLOAT2(hei, hei));
 	physicsCheckBox.SetPos(XMFLOAT2(x, y += step));
 	physicsCheckBox.SetCheck(true);
-	physicsCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	physicsCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		terrain->SetPhysicsEnabled(args.bValue);
 		generate_callback();
 		});
@@ -754,7 +754,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	tessellationCheckBox.SetSize(XMFLOAT2(hei, hei));
 	tessellationCheckBox.SetPos(XMFLOAT2(x, y += step));
 	tessellationCheckBox.SetCheck(true);
-	tessellationCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	tessellationCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		terrain->SetTessellationEnabled(args.bValue);
 		});
 	AddWidget(&tessellationCheckBox);
@@ -862,7 +862,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	presetCombo.AddItem("Mountains", PRESET_MOUNTAINS);
 	presetCombo.AddItem("Arctic", PRESET_ARCTIC);
 	presetCombo.AddItem("Desert", PRESET_DESERT);
-	presetCombo.OnSelect([=](wi::gui::EventArgs args) {
+	presetCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 
 		terrain->Generation_Cancel();
 		for (auto& modifier : modifiers)
@@ -1002,7 +1002,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	addModifierCombo.AddItem("Perlin Noise");
 	addModifierCombo.AddItem("Voronoi Noise");
 	addModifierCombo.AddItem("Heightmap Image");
-	addModifierCombo.OnSelect([=](wi::gui::EventArgs args) {
+	addModifierCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 
 		addModifierCombo.SetSelectedWithoutCallback(-1);
 		terrain->Generation_Cancel();
@@ -1047,7 +1047,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	scaleSlider.SetTooltip("Size of one chunk in horizontal directions.\nLarger chunk scale will cover larger distance, but will have less detail per unit.");
 	scaleSlider.SetSize(XMFLOAT2(wid, hei));
 	scaleSlider.SetPos(XMFLOAT2(x, y += step));
-	scaleSlider.OnSlide([=](wi::gui::EventArgs args) {
+	scaleSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->chunk_scale = args.fValue;
 		generate_callback();
 		});
@@ -1057,7 +1057,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	seedSlider.SetTooltip("Seed for terrain randomness");
 	seedSlider.SetSize(XMFLOAT2(wid, hei));
 	seedSlider.SetPos(XMFLOAT2(x, y += step));
-	seedSlider.OnSlide([=](wi::gui::EventArgs args) {
+	seedSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->seed = (uint32_t)args.iValue;
 		generate_callback();
 		});
@@ -1067,7 +1067,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	bottomLevelSlider.SetTooltip("Terrain mesh grid lowest level");
 	bottomLevelSlider.SetSize(XMFLOAT2(wid, hei));
 	bottomLevelSlider.SetPos(XMFLOAT2(x, y += step));
-	bottomLevelSlider.OnSlide([=](wi::gui::EventArgs args) {
+	bottomLevelSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->bottomLevel = args.fValue;
 		generate_callback();
 		});
@@ -1077,7 +1077,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	topLevelSlider.SetTooltip("Terrain mesh grid topmost level");
 	topLevelSlider.SetSize(XMFLOAT2(wid, hei));
 	topLevelSlider.SetPos(XMFLOAT2(x, y += step));
-	topLevelSlider.OnSlide([=](wi::gui::EventArgs args) {
+	topLevelSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->topLevel = args.fValue;
 		generate_callback();
 		});
@@ -1099,7 +1099,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	region1Slider.SetTooltip("The region's falloff power");
 	region1Slider.SetSize(XMFLOAT2(wid, hei));
 	region1Slider.SetPos(XMFLOAT2(x, y += step));
-	region1Slider.OnSlide([=](wi::gui::EventArgs args) {
+	region1Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->region1 = args.fValue;
 		generate_callback();
 		});
@@ -1109,7 +1109,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	region2Slider.SetTooltip("The region's falloff power");
 	region2Slider.SetSize(XMFLOAT2(wid, hei));
 	region2Slider.SetPos(XMFLOAT2(x, y += step));
-	region2Slider.OnSlide([=](wi::gui::EventArgs args) {
+	region2Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->region2 = args.fValue;
 		generate_callback();
 		});
@@ -1119,7 +1119,7 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	region3Slider.SetTooltip("The region's falloff power");
 	region3Slider.SetSize(XMFLOAT2(wid, hei));
 	region3Slider.SetPos(XMFLOAT2(x, y += step));
-	region3Slider.OnSlide([=](wi::gui::EventArgs args) {
+	region3Slider.OnSlide([=, this](wi::gui::EventArgs args) {
 		terrain->region3 = args.fValue;
 		generate_callback();
 		});
@@ -1181,14 +1181,14 @@ void TerrainWindow::Create(EditorComponent* _editor)
 	propsWindow.reset(new PropsWindow(editor));
 	AddWidget(propsWindow.get());
 
-	saveHeightmapButton.OnClick([=](wi::gui::EventArgs args) {
+	saveHeightmapButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		wi::helper::FileDialogParams params;
 		params.type = wi::helper::FileDialogParams::SAVE;
 		params.description = "PNG";
 		params.extensions = { "PNG" };
-		wi::helper::FileDialog(params, [=](std::string fileName) {
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+		wi::helper::FileDialog(params, [=, this](std::string fileName) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 				wi::primitive::AABB aabb;
 				for (auto& chunk : terrain->chunks)
@@ -1256,14 +1256,14 @@ void TerrainWindow::Create(EditorComponent* _editor)
 		});
 
 
-	saveRegionButton.OnClick([=](wi::gui::EventArgs args) {
+	saveRegionButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		wi::helper::FileDialogParams params;
 		params.type = wi::helper::FileDialogParams::SAVE;
 		params.description = "JPG, PNG";
 		params.extensions = { "JPG", "PNG" };
-		wi::helper::FileDialog(params, [=](std::string fileName) {
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+		wi::helper::FileDialog(params, [=, this](std::string fileName) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 				wi::primitive::AABB aabb;
 				for (auto& chunk : terrain->chunks)
@@ -1445,13 +1445,13 @@ void TerrainWindow::SetEntity(Entity entity)
 }
 void TerrainWindow::AddModifier(ModifierWindow* modifier_window)
 {
-	modifier_window->generation_callback = [=]() {
+	modifier_window->generation_callback = [=, this]() {
 		terrain->Generation_Restart();
 	};
 	modifiers.emplace_back().reset(modifier_window);
 	AddWidget(modifier_window);
 
-	modifier_window->OnClose([=](wi::gui::EventArgs args) {
+	modifier_window->OnClose([=, this](wi::gui::EventArgs args) {
 		// Can't delete modifier in itself, so add to a deferred deletion queue:
 		terrain->modifiers_to_remove.push_back(modifier_window->modifier);
 		modifiers_to_remove.push_back(modifier_window);
