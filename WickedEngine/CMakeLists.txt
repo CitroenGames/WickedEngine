@@ -182,12 +182,15 @@ add_library(dxcompiler SHARED IMPORTED)
 set_property(TARGET dxcompiler PROPERTY
 		IMPORTED_LOCATION ${WICKED_ROOT_DIR}/WickedEngine/${LIBDXCOMPILER} )
 
-# Copy the shader library next to the executable
+
+#TODO: find a way to make this work in windows
+if(NOT WIN32)
 add_custom_command(
 		TARGET ${TARGET_NAME} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WICKED_ROOT_DIR}/WickedEngine/${LIBDXCOMPILER} ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E create_symlink ${WICKED_ROOT_DIR}/WickedEngine/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
 )
+endif()
 
 
 # OFFLINE SHADER COMPILER
