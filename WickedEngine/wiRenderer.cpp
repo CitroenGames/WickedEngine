@@ -610,7 +610,11 @@ SHADERTYPE GetPSTYPE(RENDERPASS renderPass, bool alphatest, bool transparent, Ma
 	switch (renderPass)
 	{
 	case RENDERPASS_MAIN:
-		realPS = SHADERTYPE((transparent ? PSTYPE_OBJECT_TRANSPARENT_PERMUTATION_BEGIN : PSTYPE_OBJECT_PERMUTATION_BEGIN) + shaderType);
+		realPS = static_cast<SHADERTYPE>(
+    static_cast<int>(transparent ? PSTYPE_OBJECT_TRANSPARENT_PERMUTATION_BEGIN : PSTYPE_OBJECT_PERMUTATION_BEGIN) 
+    + static_cast<int>(shaderType)
+);
+
 		break;
 	case RENDERPASS_PREPASS:
 		if (alphatest)
