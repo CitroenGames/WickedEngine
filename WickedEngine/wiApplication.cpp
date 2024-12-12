@@ -644,7 +644,7 @@ namespace wi
 
 			if (!use_dx12 && !use_vulkan)
 			{
-#if defined(WICKEDENGINE_BUILD_DX12)
+#ifdef WICKEDENGINE_BUILD_DX12
 				use_dx12 = true;
 #elif defined(WICKEDENGINE_BUILD_VULKAN)
 				use_vulkan = true;
