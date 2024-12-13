@@ -61,7 +61,7 @@ void ComponentsWindow::Create(EditorComponent* _editor)
 	filterInput.SetTooltip("Search entities by name");
 	filterInput.SetDescription(ICON_SEARCH "  ");
 	filterInput.SetCancelInputEnabled(false);
-	filterInput.OnInput([=](wi::gui::EventArgs args) {
+	filterInput.OnInput([=, this](wi::gui::EventArgs args) {
 		RefreshEntityTree();
 		});
 	filterInput.SetLocalizationEnabled(wi::gui::LocalizationEnabled::Tooltip);
@@ -73,7 +73,7 @@ void ComponentsWindow::Create(EditorComponent* _editor)
 	filterCaseCheckBox.SetUnCheckText("a");
 	filterCaseCheckBox.SetTooltip("Toggle case-sensitive name filtering");
 	filterCaseCheckBox.SetLocalizationEnabled(wi::gui::LocalizationEnabled::Tooltip);
-	filterCaseCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	filterCaseCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		RefreshEntityTree();
 		});
 	AddWidget(&filterCaseCheckBox);
@@ -108,7 +108,7 @@ void ComponentsWindow::Create(EditorComponent* _editor)
 		editor->RecordSelection(archive);
 
 		});
-	entityTree.OnDelete([=](wi::gui::EventArgs args) {
+	entityTree.OnDelete([=, this](wi::gui::EventArgs args) {
 		// Deletions will be performed in a batch next frame:
 		//	We don't delete here, because this callback will execute once for each item
 		editor->deleting = true;
@@ -222,7 +222,7 @@ void ComponentsWindow::Create(EditorComponent* _editor)
 	newComponentCombo.AddItem("Font " ICON_FONT, ADD_FONT);
 	newComponentCombo.AddItem("Voxel Grid " ICON_VOXELGRID, ADD_VOXELGRID);
 	newComponentCombo.AddItem("Metadata " ICON_METADATA, ADD_METADATA);
-	newComponentCombo.OnSelect([=](wi::gui::EventArgs args) {
+	newComponentCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		newComponentCombo.SetSelectedWithoutCallback(-1);
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		wi::vector<Entity> entities;

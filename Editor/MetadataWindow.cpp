@@ -11,7 +11,7 @@ void MetadataWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(300, 240));
 
 	closeButton.SetTooltip("Delete MetadataComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;

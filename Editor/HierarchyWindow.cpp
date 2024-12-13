@@ -11,7 +11,7 @@ void HierarchyWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(480, 60));
 
 	closeButton.SetTooltip("Delete HierarchyComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -118,7 +118,7 @@ void HierarchyWindow::SetEntity(Entity entity)
 void HierarchyWindow::ResizeLayout()
 {
 	wi::gui::Window::ResizeLayout();
-	
+
 	parentCombo.SetPos(XMFLOAT2(60, 4));
 	parentCombo.SetSize(XMFLOAT2(GetSize().x - 86, parentCombo.GetSize().y));
 }

@@ -11,7 +11,7 @@ void HairParticleWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(600, 1000));
 
 	closeButton.SetTooltip("Delete HairParticleSystem");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -241,7 +241,7 @@ void HairParticleWindow::Create(EditorComponent* _editor)
 		spriterectwnd.SetSprite(sprite);
 		spriterectwnd.ResetSelection();
 
-		spriterectwnd.OnAccepted([=]() {
+		spriterectwnd.OnAccepted([=, this]() {
 
 			wi::HairParticleSystem* hair = GetHair();
 			if (hair == nullptr)
@@ -250,7 +250,7 @@ void HairParticleWindow::Create(EditorComponent* _editor)
 			hair->atlas_rects.emplace_back().texMulAdd = spriterectwnd.muladd;
 			hair->SetDirty();
 
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 				RefreshSprites();
 			});
 		});
@@ -318,14 +318,14 @@ void HairParticleWindow::RefreshSprites()
 			y = sprite;
 			y.params.enableDrawRect(XMFLOAT4(rect.z * desc.width, rect.w * desc.height, rect.x * desc.width, rect.y * desc.height));
 		}
-		x.OnClick([=](wi::gui::EventArgs args) {
+		x.OnClick([=, this](wi::gui::EventArgs args) {
 
 			spriterectwnd.SetVisible(true);
 
 			spriterectwnd.SetSprite(sprite);
 			spriterectwnd.ResetSelection();
 
-			spriterectwnd.OnAccepted([=]() {
+			spriterectwnd.OnAccepted([=, this]() {
 
 				wi::HairParticleSystem* hair = GetHair();
 				if (hair == nullptr)
@@ -334,7 +334,7 @@ void HairParticleWindow::RefreshSprites()
 				hair->atlas_rects[i].texMulAdd = spriterectwnd.muladd;
 				hair->SetDirty();
 
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					RefreshSprites();
 				});
 			});
@@ -344,12 +344,12 @@ void HairParticleWindow::RefreshSprites()
 		auto& r = spriteRemoveButtons[i];
 		r.Create("X");
 		r.SetLocalizationEnabled(false);
-		r.OnClick([=](wi::gui::EventArgs args) {
+		r.OnClick([=, this](wi::gui::EventArgs args) {
 
 			hair->atlas_rects.erase(hair->atlas_rects.begin() + i);
 			hair->SetDirty();
 
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 				RefreshSprites();
 				});
 		});
@@ -360,7 +360,7 @@ void HairParticleWindow::RefreshSprites()
 		s.SetValue(hair->atlas_rects[i].size);
 		s.SetLocalizationEnabled(false);
 		s.SetTooltip("Adjust sprite's overall size");
-		s.OnSlide([=](wi::gui::EventArgs args) {
+		s.OnSlide([=, this](wi::gui::EventArgs args) {
 
 			hair->atlas_rects[i].size = args.fValue;
 			hair->SetDirty();

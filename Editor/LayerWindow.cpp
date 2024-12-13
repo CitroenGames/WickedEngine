@@ -11,7 +11,7 @@ void LayerWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(300, 350));
 
 	closeButton.SetTooltip("Delete LayerComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -43,7 +43,7 @@ void LayerWindow::Create(EditorComponent* _editor)
 		layers[i].Create("");
 		layers[i].SetText(std::to_string(i) + ": ");
 		layers[i].SetPos(XMFLOAT2(x + 20 + (i % 5) * 50, y + (i / 5) * step));
-		layers[i].OnClick([=](wi::gui::EventArgs args) {
+		layers[i].OnClick([=, this](wi::gui::EventArgs args) {
 			wi::scene::Scene& scene = editor->GetCurrentScene();
 			for (auto& x : editor->translator.selected)
 			{

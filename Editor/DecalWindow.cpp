@@ -12,7 +12,7 @@ void DecalWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(300, 200));
 
 	closeButton.SetTooltip("Delete DecalComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -42,7 +42,7 @@ void DecalWindow::Create(EditorComponent* _editor)
 	onlyalphaCheckBox.Create("Alpha only basecolor: ");
 	onlyalphaCheckBox.SetSize(XMFLOAT2(hei, hei));
 	onlyalphaCheckBox.SetTooltip("You can enable this to only use alpha channel from basecolor map. Useful for blending normalmap-only decals.");
-	onlyalphaCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	onlyalphaCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -57,7 +57,7 @@ void DecalWindow::Create(EditorComponent* _editor)
 	slopeBlendPowerSlider.Create(0, 8, 0, 1000, "Slope Blend: ");
 	slopeBlendPowerSlider.SetSize(XMFLOAT2(100, hei));
 	slopeBlendPowerSlider.SetTooltip("Set a power factor for blending on surface slopes. 0 = no slope blend, increasing = more slope blend");
-	slopeBlendPowerSlider.OnSlide([=](wi::gui::EventArgs args) {
+	slopeBlendPowerSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

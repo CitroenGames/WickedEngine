@@ -12,7 +12,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(670, 1020));
 
 	closeButton.SetTooltip("Delete Font");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -33,7 +33,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	textInput.Create("");
 	textInput.SetPos(XMFLOAT2(x, y));
-	textInput.OnInput([=](wi::gui::EventArgs args) {
+	textInput.OnInput([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -46,13 +46,13 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&textInput);
 
 	fileButton.Create("From file...");
-	fileButton.OnClick([=](wi::gui::EventArgs args) {
+	fileButton.OnClick([=, this](wi::gui::EventArgs args) {
 
 		wi::helper::FileDialogParams params;
 		params.type = wi::helper::FileDialogParams::OPEN;
 		params.description = "Text (*.txt)";
 		params.extensions = { "txt" };
-		wi::helper::FileDialog(params, [=](std::string fileName) {
+		wi::helper::FileDialog(params, [=, this](std::string fileName) {
 			wi::vector<uint8_t> filedata;
 			wi::helper::FileRead(fileName, filedata);
 			std::string fileText;
@@ -74,7 +74,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	fontStyleButton.Create("");
 	fontStyleButton.SetDescription("Style: ");
 	fontStyleButton.SetTooltip("Load a font style from file (.TTF) to apply to this font.");
-	fontStyleButton.OnClick([=](wi::gui::EventArgs args) {
+	fontStyleButton.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -102,7 +102,7 @@ void FontWindow::Create(EditorComponent* _editor)
 				params.type = wi::helper::FileDialogParams::OPEN;
 				params.description = "Font (*.TTF)";
 				params.extensions = wi::resourcemanager::GetSupportedFontStyleExtensions();
-				wi::helper::FileDialog(params, [=](std::string fileName) {
+				wi::helper::FileDialog(params, [=, this](std::string fileName) {
 					font->fontStyleResource = wi::resourcemanager::Load(fileName);
 					font->fontStyleName = fileName;
 					fontStyleButton.SetText(wi::helper::GetFileNameFromPath(font->fontStyleName));
@@ -131,7 +131,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	fontSizeCombo.AddItem("84", 84);
 	fontSizeCombo.AddItem("96", 96);
 	fontSizeCombo.AddItem("108", 108);
-	fontSizeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	fontSizeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -148,7 +148,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	hAlignCombo.AddItem("Left", wi::font::WIFALIGN_LEFT);
 	hAlignCombo.AddItem("Center", wi::font::WIFALIGN_CENTER);
 	hAlignCombo.AddItem("Right", wi::font::WIFALIGN_RIGHT);
-	hAlignCombo.OnSelect([=](wi::gui::EventArgs args) {
+	hAlignCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -165,7 +165,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	vAlignCombo.AddItem("Top", wi::font::WIFALIGN_TOP);
 	vAlignCombo.AddItem("Center", wi::font::WIFALIGN_CENTER);
 	vAlignCombo.AddItem("Bottom", wi::font::WIFALIGN_BOTTOM);
-	vAlignCombo.OnSelect([=](wi::gui::EventArgs args) {
+	vAlignCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -179,7 +179,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	rotationSlider.Create(0, 360, 0, 10000, "Rotation: ");
 	rotationSlider.SetTooltip("Z Rotation around alignment center point. The editor input is in degrees.");
-	rotationSlider.OnSlide([=](wi::gui::EventArgs args) {
+	rotationSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -193,7 +193,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	spacingSlider.Create(0, 10, 0, 10000, "Spacing: ");
 	spacingSlider.SetTooltip("Horizontal spacing between characters.");
-	spacingSlider.OnSlide([=](wi::gui::EventArgs args) {
+	spacingSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -206,7 +206,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&spacingSlider);
 
 	softnessSlider.Create(0, 1, 0, 10000, "Softness: ");
-	softnessSlider.OnSlide([=](wi::gui::EventArgs args) {
+	softnessSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -219,7 +219,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&softnessSlider);
 
 	boldenSlider.Create(0, 1, 0, 10000, "Bolden: ");
-	boldenSlider.OnSlide([=](wi::gui::EventArgs args) {
+	boldenSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -232,7 +232,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&boldenSlider);
 
 	shadowSoftnessSlider.Create(0, 1, 0, 10000, "Shadow Softness: ");
-	shadowSoftnessSlider.OnSlide([=](wi::gui::EventArgs args) {
+	shadowSoftnessSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -245,7 +245,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&shadowSoftnessSlider);
 
 	shadowBoldenSlider.Create(0, 1, 0, 10000, "Shadow Bolden: ");
-	shadowBoldenSlider.OnSlide([=](wi::gui::EventArgs args) {
+	shadowBoldenSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -258,7 +258,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&shadowBoldenSlider);
 
 	shadowOffsetXSlider.Create(-2, 2, 0, 10000, "Shadow Offset X: ");
-	shadowOffsetXSlider.OnSlide([=](wi::gui::EventArgs args) {
+	shadowOffsetXSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -271,7 +271,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&shadowOffsetXSlider);
 
 	shadowOffsetYSlider.Create(-2, 2, 0, 10000, "Shadow Offset Y: ");
-	shadowOffsetYSlider.OnSlide([=](wi::gui::EventArgs args) {
+	shadowOffsetYSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -284,7 +284,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&shadowOffsetYSlider);
 
 	intensitySlider.Create(0, 100, 1, 10000, "Intensity: ");
-	intensitySlider.OnSlide([=](wi::gui::EventArgs args) {
+	intensitySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -297,7 +297,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	AddWidget(&intensitySlider);
 
 	shadowIntensitySlider.Create(0, 100, 1, 10000, "Shadow Intensity: ");
-	shadowIntensitySlider.OnSlide([=](wi::gui::EventArgs args) {
+	shadowIntensitySlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -311,7 +311,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	hiddenCheckBox.Create("Hidden: ");
 	hiddenCheckBox.SetTooltip("Hide / unhide the font");
-	hiddenCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	hiddenCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -325,7 +325,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	cameraFacingCheckBox.Create("Camera Facing: ");
 	cameraFacingCheckBox.SetTooltip("Camera facing fonts will always rotate towards the camera.");
-	cameraFacingCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	cameraFacingCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -339,7 +339,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	cameraScalingCheckBox.Create("Camera Scaling: ");
 	cameraScalingCheckBox.SetTooltip("Camera scaling fonts will always keep the same size on screen, irrespective of the distance to the camera.");
-	cameraScalingCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	cameraScalingCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -353,7 +353,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	depthTestCheckBox.Create("Depth Test: ");
 	depthTestCheckBox.SetTooltip("Depth tested fonts will be clipped against geometry.");
-	depthTestCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	depthTestCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -374,7 +374,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	sdfCheckBox.Create("SDF: ");
 	sdfCheckBox.SetTooltip("Signed Distance Field rendering is used for improved font upscaling, softness, boldness and soft shadow effects.");
-	sdfCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	sdfCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -399,7 +399,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	colorModeCombo.AddItem("Font color");
 	colorModeCombo.AddItem("Shadow color");
 	colorModeCombo.SetTooltip("Choose the destination data of the color picker.");
-	colorModeCombo.OnSelect([=](wi::gui::EventArgs args) {
+	colorModeCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -446,7 +446,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	typewriterTimeSlider.Create(0, 10, 0, 10000, "Typewriter time: ");
 	typewriterTimeSlider.SetTooltip("Time to complete typewriter animation (0 = disable).");
-	typewriterTimeSlider.OnSlide([=](wi::gui::EventArgs args) {
+	typewriterTimeSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -460,7 +460,7 @@ void FontWindow::Create(EditorComponent* _editor)
 
 	typewriterLoopedCheckBox.Create("Typewriter Looped: ");
 	typewriterLoopedCheckBox.SetTooltip("Whether typewriter animation is looped or not.");
-	typewriterLoopedCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	typewriterLoopedCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -477,7 +477,7 @@ void FontWindow::Create(EditorComponent* _editor)
 	typewriterStartInput.SetTooltip("Set the starting character for typewriter animation (0 = first).");
 	typewriterStartInput.SetPos(XMFLOAT2(x, y));
 	typewriterStartInput.SetSize(XMFLOAT2(siz, hei));
-	typewriterStartInput.OnInputAccepted([=](wi::gui::EventArgs args) {
+	typewriterStartInput.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

@@ -11,7 +11,7 @@ void AnimationWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(520, 540));
 
 	closeButton.SetTooltip("Delete AnimationComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
 		editor->RecordEntity(archive, entity);
@@ -881,7 +881,7 @@ void AnimationWindow::Create(EditorComponent* _editor)
 	keyframesList.Create("Keyframes");
 	keyframesList.SetSize(XMFLOAT2(wid, 200));
 	keyframesList.SetPos(XMFLOAT2(4, y += step));
-	keyframesList.OnSelect([=](wi::gui::EventArgs args) {
+	keyframesList.OnSelect([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		AnimationComponent* animation = scene.animations.GetComponent(entity);
 		if (animation != nullptr)
@@ -901,7 +901,7 @@ void AnimationWindow::Create(EditorComponent* _editor)
 			}
 		}
 	});
-	keyframesList.OnDelete([=](wi::gui::EventArgs args) {
+	keyframesList.OnDelete([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		AnimationComponent* animation = scene.animations.GetComponent(entity);
 		if (animation != nullptr)
@@ -979,7 +979,7 @@ void AnimationWindow::Create(EditorComponent* _editor)
 	retargetCombo.selected_font.anim.typewriter.character_start = 1;
 	retargetCombo.SetTooltip("Make a copy of this animation and retarget it for a humanoid.\nThis will only work for bones in this animation that are part of a humanoid.");
 	retargetCombo.SetInvalidSelectionText("...");
-	retargetCombo.OnSelect([=](wi::gui::EventArgs args) {
+	retargetCombo.OnSelect([=, this](wi::gui::EventArgs args) {
 		retargetCombo.SetSelectedWithoutCallback(-1);
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 

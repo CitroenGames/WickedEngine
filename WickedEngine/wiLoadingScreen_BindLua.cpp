@@ -78,7 +78,7 @@ namespace wi::lua
 						}
 					}
 					Entity root = CreateEntity();
-					loading->addLoadingFunction([=](wi::jobsystem::JobArgs args) {
+					loading->addLoadingFunction([=, this](wi::jobsystem::JobArgs args) {
 						Scene scene;
 						wi::scene::LoadModel2(scene, fileName, transform, root);
 
@@ -115,7 +115,7 @@ namespace wi::lua
 					}
 				}
 				Entity root = CreateEntity();
-				loading->addLoadingFunction([=](wi::jobsystem::JobArgs args) {
+				loading->addLoadingFunction([=, this](wi::jobsystem::JobArgs args) {
 					Scene scene;
 					wi::scene::LoadModel2(scene, fileName, transform, root);
 

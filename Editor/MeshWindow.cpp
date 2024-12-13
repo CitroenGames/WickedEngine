@@ -29,7 +29,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(580, 880));
 
 	closeButton.SetTooltip("Delete MeshComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -62,7 +62,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 	subsetComboBox.SetSize(XMFLOAT2(40, hei));
 	subsetComboBox.SetPos(XMFLOAT2(x, y));
 	subsetComboBox.SetEnabled(false);
-	subsetComboBox.OnSelect([=](wi::gui::EventArgs args) {
+	subsetComboBox.OnSelect([=, this](wi::gui::EventArgs args) {
 		Scene& scene = editor->GetCurrentScene();
 		MeshComponent* mesh = scene.meshes.GetComponent(entity);
 		if (mesh != nullptr)
@@ -89,7 +89,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 
 	subsetRemoveButton.Create("X");
 	subsetRemoveButton.SetTooltip("Remove currently selected subset. LODs will be lost and need to be regenerated!");
-	subsetRemoveButton.OnClick([=](wi::gui::EventArgs args) {
+	subsetRemoveButton.OnClick([=, this](wi::gui::EventArgs args) {
 		Scene& scene = editor->GetCurrentScene();
 		MeshComponent* mesh = scene.meshes.GetComponent(entity);
 		if (mesh != nullptr)
@@ -347,7 +347,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 	mergeButton.SetTooltip("Merges selected objects/meshes into one.\nAll selected object transformations will be applied to meshes and all meshes will be baked into a single mesh.");
 	mergeButton.SetSize(XMFLOAT2(mod_wid, hei));
 	mergeButton.SetPos(XMFLOAT2(mod_x, y += step));
-	mergeButton.OnClick([=](wi::gui::EventArgs args) {
+	mergeButton.OnClick([=, this](wi::gui::EventArgs args) {
 		Scene& scene = editor->GetCurrentScene();
 		ObjectComponent merged_object;
 		MeshComponent merged_mesh;
@@ -597,7 +597,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 		{
 			scene.Entity_Remove(x);
 		}
-		
+
 	});
 	AddWidget(&mergeButton);
 
@@ -637,8 +637,8 @@ void MeshWindow::Create(EditorComponent* _editor)
 		params.description = ".h (C++ header file)";
 		params.extensions.push_back("h");
 		params.type = wi::helper::FileDialogParams::TYPE::SAVE;
-		wi::helper::FileDialog(params, [=](std::string filename) {
-			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+		wi::helper::FileDialog(params, [=, this](std::string filename) {
+			wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 				wi::scene::Scene& scene = editor->GetCurrentScene();
 				wi::vector<XMFLOAT3> vertices;

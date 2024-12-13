@@ -10,7 +10,7 @@ void ScriptWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(520, 80));
 
 	closeButton.SetTooltip("Delete Script");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -29,7 +29,7 @@ void ScriptWindow::Create(EditorComponent* _editor)
 	fileButton.Create("Open File...");
 	fileButton.SetDescription("File: ");
 	fileButton.SetSize(XMFLOAT2(wid, hei));
-	fileButton.OnClick([=](wi::gui::EventArgs args) {
+	fileButton.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		wi::scene::ScriptComponent* script = scene.scripts.GetComponent(entity);
 		if (script == nullptr)
@@ -48,8 +48,8 @@ void ScriptWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Lua Script (*.lua)";
 			params.extensions = wi::resourcemanager::GetSupportedScriptExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					script->CreateFromFile(fileName);
 					fileButton.SetText(wi::helper::GetFileNameFromPath(fileName));
 					});
@@ -61,7 +61,7 @@ void ScriptWindow::Create(EditorComponent* _editor)
 	playonceCheckBox.Create("Once: ");
 	playonceCheckBox.SetTooltip("Play the script only one time, and stop immediately.\nUseful for having custom update frequency logic in the script.");
 	playonceCheckBox.SetSize(XMFLOAT2(hei, hei));
-	playonceCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	playonceCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -76,7 +76,7 @@ void ScriptWindow::Create(EditorComponent* _editor)
 	playstopButton.Create("");
 	playstopButton.SetTooltip("Play / Stop script");
 	playstopButton.SetSize(XMFLOAT2(wid, hei));
-	playstopButton.OnClick([=](wi::gui::EventArgs args) {
+	playstopButton.OnClick([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{

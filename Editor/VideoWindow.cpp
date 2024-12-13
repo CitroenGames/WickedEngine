@@ -34,7 +34,7 @@ void VideoWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(440, 840));
 
 	closeButton.SetTooltip("Delete VideoComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -66,8 +66,8 @@ void VideoWindow::Create(EditorComponent* _editor)
 			params.type = wi::helper::FileDialogParams::OPEN;
 			params.description = "Video (.mp4)";
 			params.extensions = wi::resourcemanager::GetSupportedVideoExtensions();
-			wi::helper::FileDialog(params, [=](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+			wi::helper::FileDialog(params, [=, this](std::string fileName) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					video->filename = fileName;
 					video->videoResource = wi::resourcemanager::Load(fileName);
 					wi::video::CreateVideoInstance(&video->videoResource.GetVideo(), &video->videoinstance);

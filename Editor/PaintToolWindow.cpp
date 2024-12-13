@@ -173,7 +173,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 	{
 		stabilizerSlider.SetValue((float)editor->main->config.GetSection("paint_tool").GetInt("stabilizer"));
 	}
-	stabilizerSlider.OnSlide([=](wi::gui::EventArgs args) {
+	stabilizerSlider.OnSlide([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("paint_tool").Set("stabilizer", args.iValue);
 		editor->main->config.Commit();
 		});
@@ -187,7 +187,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 	{
 		backfaceCheckBox.SetCheck(editor->main->config.GetSection("paint_tool").GetBool("backfaces"));
 	}
-	backfaceCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	backfaceCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("paint_tool").Set("backfaces", args.bValue);
 		editor->main->config.Commit();
 		});
@@ -202,7 +202,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 	{
 		wireCheckBox.SetCheck(editor->main->config.GetSection("paint_tool").GetBool("wireframe"));
 	}
-	wireCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	wireCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("paint_tool").Set("wireframe", args.bValue);
 		editor->main->config.Commit();
 		});
@@ -216,7 +216,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 	{
 		pressureCheckBox.SetCheck(editor->main->config.GetSection("paint_tool").GetBool("pressure"));
 	}
-	pressureCheckBox.OnClick([=](wi::gui::EventArgs args) {
+	pressureCheckBox.OnClick([=, this](wi::gui::EventArgs args) {
 		editor->main->config.GetSection("paint_tool").Set("pressure", args.bValue);
 		editor->main->config.Commit();
 		});
@@ -350,7 +350,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
 			wi::helper::FileDialog(params, [this](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					brushTex = wi::resourcemanager::Load(fileName);
 					brushTextureButton.SetImage(brushTex);
 					});
@@ -381,7 +381,7 @@ void PaintToolWindow::Create(EditorComponent* _editor)
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
 			wi::helper::FileDialog(params, [this](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					revealTex = wi::resourcemanager::Load(fileName);
 					revealTextureButton.SetImage(revealTex);
 					});
@@ -1076,7 +1076,7 @@ void PaintToolWindow::Update(float dt)
 							}
 						}
 
-						wi::jobsystem::Execute(ctx, [=](wi::jobsystem::JobArgs args) {
+						wi::jobsystem::Execute(ctx, [=, this](wi::jobsystem::JobArgs args) {
 							if (mesh->bvh.IsValid())
 							{
 								mesh->BuildBVH();
@@ -1137,7 +1137,7 @@ void PaintToolWindow::Update(float dt)
 
 				if (rebuild)
 				{
-					wi::jobsystem::Execute(ctx, [=](wi::jobsystem::JobArgs args) {
+					wi::jobsystem::Execute(ctx, [=, this](wi::jobsystem::JobArgs args) {
 						mesh->ComputeNormals(MeshComponent::COMPUTE_NORMALS_SMOOTH_FAST);
 					});
 				}

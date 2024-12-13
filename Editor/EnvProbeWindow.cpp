@@ -13,7 +13,7 @@ void EnvProbeWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(420, 340));
 
 	closeButton.SetTooltip("Delete EnvironmentProbeComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -118,8 +118,8 @@ void EnvProbeWindow::Create(EditorComponent* _editor)
 				params.type = wi::helper::FileDialogParams::OPEN;
 				params.description = "DDS";
 				params.extensions = { "DDS" };
-				wi::helper::FileDialog(params, [=](std::string fileName) {
-					wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::helper::FileDialog(params, [=, this](std::string fileName) {
+					wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 						wi::Resource resource = wi::resourcemanager::Load(fileName);
 						if (has_flag(resource.GetTexture().GetDesc().misc_flags, wi::graphics::ResourceMiscFlag::TEXTURECUBE))
@@ -157,8 +157,8 @@ void EnvProbeWindow::Create(EditorComponent* _editor)
 				params.type = wi::helper::FileDialogParams::SAVE;
 				params.description = "DDS";
 				params.extensions = { "DDS" };
-				wi::helper::FileDialog(params, [=](std::string fileName) {
-					wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::helper::FileDialog(params, [=, this](std::string fileName) {
+					wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 
 						std::string extension = wi::helper::toUpper(wi::helper::GetExtensionFromFileName(fileName));
 						std::string filename_replaced = fileName;

@@ -32,7 +32,7 @@ void MaterialWindow::Create(EditorComponent* _editor)
 	SetSize(XMFLOAT2(300, 1580));
 
 	closeButton.SetTooltip("Delete MaterialComponent");
-	OnClose([=](wi::gui::EventArgs args) {
+	OnClose([=, this](wi::gui::EventArgs args) {
 
 		wi::Archive& archive = editor->AdvanceHistory();
 		archive << EditorComponent::HISTORYOP_COMPONENT_DATA;
@@ -748,7 +748,7 @@ void MaterialWindow::Create(EditorComponent* _editor)
 	AddWidget(&blendTerrainSlider);
 
 
-	// 
+	//
 	hei = 20;
 	step = hei + 2;
 	x = 10;
@@ -757,7 +757,7 @@ void MaterialWindow::Create(EditorComponent* _editor)
 	materialNameField.SetTooltip("Set a name for the material...");
 	materialNameField.SetPos(XMFLOAT2(10, y += step));
 	materialNameField.SetSize(XMFLOAT2(300, hei));
-	materialNameField.OnInputAccepted([=](wi::gui::EventArgs args) {
+	materialNameField.OnInputAccepted([=, this](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
 		for (auto& x : editor->translator.selected)
 		{
@@ -997,7 +997,7 @@ void MaterialWindow::Create(EditorComponent* _editor)
 			params.description = "Texture";
 			params.extensions = wi::resourcemanager::GetSupportedImageExtensions();
 			wi::helper::FileDialog(params, [this, material, slot](std::string fileName) {
-				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=](uint64_t userdata) {
+				wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [=, this](uint64_t userdata) {
 					wi::resourcemanager::Flags flags = material->GetTextureSlotResourceFlags(MaterialComponent::TEXTURESLOT(slot));
 					material->textures[slot].resource = wi::resourcemanager::Load(fileName, flags);
 					material->textures[slot].name = fileName;
@@ -1131,7 +1131,7 @@ void MaterialWindow::SetEntity(Entity entity)
 
 		colorComboBox.SetEnabled(true);
 		colorPicker.SetEnabled(true);
-		
+
 		switch (colorComboBox.GetSelected())
 		{
 		default:
