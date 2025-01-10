@@ -724,8 +724,8 @@ void RenderClouds(uint3 DTid, float2 uv, float depth, float3 depthWorldPosition,
 [numthreads(POSTPROCESS_BLOCKSIZE, POSTPROCESS_BLOCKSIZE, 1)]
 void main(uint3 DTid : SV_DispatchThreadID)
 {
-	TextureCube input = bindless_cubemaps[capture.texture_input];
-	RWTexture2DArray<float4> output = bindless_rwtextures2DArray[capture.texture_output];
+	TextureCube input = bindless_cubemaps[descriptor_index(capture.texture_input)];
+	RWTexture2DArray<float4> output = bindless_rwtextures2DArray[descriptor_index(capture.texture_output)];
 
 	const float2 uv = (DTid.xy + 0.5) * capture.resolution_rcp;
 	const float3 N = uv_to_cubemap(uv, DTid.z);
@@ -762,7 +762,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 {
 	const uint2 halfResIndexToCoordinateOffset[4] = { uint2(0, 0), uint2(1, 0), uint2(0, 1), uint2(1, 1) };
 	
-	int subPixelIndex = GetFrame().frame_count % 4;
+	int subPixelIndex = uint(volumetricclouds_frame) % 4;
 	int checkerBoardIndex = ComputeCheckerBoardIndex(DTid.xy, subPixelIndex);
 	uint2 halfResCoord = DTid.xy * 2 + halfResIndexToCoordinateOffset[checkerBoardIndex];
 

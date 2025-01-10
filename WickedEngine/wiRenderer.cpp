@@ -190,14 +190,6 @@ Texture texture_detailNoise;
 Texture texture_curlNoise;
 Texture texture_weatherMap;
 
-// A dummy luminance buffer with exposure set to 1.
-// This avoids having to branch in shaders that consume the exposure value
-// when eye adaption is disabled.
-// It also works around an apparent bug in the drivers for certain GTX 10xx cards
-// where just testing if a bindless buffer descriptor is valid requires that it is valid.
-// See: https://github.com/turanszkij/WickedEngine/issues/450
-GPUBuffer luminance_dummy;
-
 // Direct reference to a renderable instance:
 struct RenderBatch
 {
@@ -1065,7 +1057,6 @@ void LoadShaders()
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_VOLUMETRICCLOUDS_RENDER_CAPTURE_MSAA], "volumetricCloud_renderCS_capture_MSAA.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_VOLUMETRICCLOUDS_REPROJECT], "volumetricCloud_reprojectCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_VOLUMETRICCLOUDS_SHADOW_RENDER], "volumetricCloud_shadow_renderCS.cso"); });
-	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_VOLUMETRICCLOUDS_SHADOW_FILTER], "volumetricCloud_shadow_filterCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_FXAA], "fxaaCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_TEMPORALAA], "temporalaaCS.cso"); });
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) { LoadShader(ShaderStage::CS, shaders[CSTYPE_POSTPROCESS_SHARPEN], "sharpenCS.cso"); });
@@ -1447,13 +1438,9 @@ void LoadShaders()
 		desc.ps = &shaders[PSTYPE_RENDERLIGHTMAP];
 		desc.rs = &rasterizers[RSTYPE_LIGHTMAP];
 		desc.bs = &blendStates[BSTYPE_TRANSPARENT];
-		desc.dss = &depthStencils[DSSTYPE_DEPTHDISABLED];
+		desc.dss = &depthStencils[DSSTYPE_DEFAULT]; // Note: depth is used to disallow overlapped pixel/primitive writes with conservative rasterization!
 
-		RenderPassInfo renderpass_info;
-		renderpass_info.rt_count = 1;
-		renderpass_info.rt_formats[0] = Format::R32G32B32A32_FLOAT;
-
-		device->CreatePipelineState(&desc, &PSO_renderlightmap, &renderpass_info);
+		device->CreatePipelineState(&desc, &PSO_renderlightmap);
 		});
 	wi::jobsystem::Execute(ctx, [](wi::jobsystem::JobArgs args) {
 		PipelineStateDesc desc;
@@ -2117,22 +2104,6 @@ void LoadBuffers()
 	}
 
 	{
-		// the dummy buffer is read-only so only the first 'exposure' value is needed,
-		// not the luminance or histogram values in the full version of the buffer used
-		// when eye adaption is enabled.
-		float values[1] = { 1 };
-
-		GPUBufferDesc desc;
-		desc.size = sizeof(values);
-		desc.bind_flags = BindFlag::SHADER_RESOURCE;
-		desc.misc_flags = ResourceMiscFlag::BUFFER_RAW;
-		device->CreateBuffer(&desc, values, &luminance_dummy);
-		device->SetName(&luminance_dummy, "luminance_dummy");
-
-		static_assert(LUMINANCE_BUFFER_OFFSET_EXPOSURE == 0);
-	}
-
-	{
 		TextureDesc desc;
 		desc.type = TextureDesc::Type::TEXTURE_3D;
 		desc.format = Format::R16_FLOAT;
@@ -2154,29 +2125,6 @@ void LoadBuffers()
 		desc.bind_flags = BindFlag::SHADER_RESOURCE | BindFlag::UNORDERED_ACCESS;
 		device->CreateTexture(&desc, nullptr, &textures[TEXTYPE_2D_CAUSTICS]);
 		device->SetName(&textures[TEXTYPE_2D_CAUSTICS], "textures[TEXTYPE_2D_CAUSTICS]");
-	}
-	{
-		// Note: Create dummy shadow map atlas to avoid issue with AMD RX 6650 GPU
-		//	It seems like it incorectly handles dynamic branch on descriptor index
-		TextureDesc desc;
-		desc.width = 1;
-		desc.height = 1;
-		desc.format = format_depthbuffer_shadowmap;
-		desc.bind_flags = BindFlag::DEPTH_STENCIL | BindFlag::SHADER_RESOURCE;
-		desc.layout = ResourceState::SHADER_RESOURCE;
-		desc.misc_flags = ResourceMiscFlag::TEXTURE_COMPATIBLE_COMPRESSION;
-		device->CreateTexture(&desc, nullptr, &shadowMapAtlas);
-		device->SetName(&shadowMapAtlas, "shadowMapAtlas");
-
-		desc.format = format_rendertarget_shadowmap;
-		desc.bind_flags = BindFlag::RENDER_TARGET | BindFlag::SHADER_RESOURCE;
-		desc.layout = ResourceState::SHADER_RESOURCE;
-		desc.clear.color[0] = 1;
-		desc.clear.color[1] = 1;
-		desc.clear.color[2] = 1;
-		desc.clear.color[3] = 0;
-		device->CreateTexture(&desc, nullptr, &shadowMapAtlas_Transparent);
-		device->SetName(&shadowMapAtlas_Transparent, "shadowMapAtlas_Transparent");
 	}
 }
 void SetUpStates()
@@ -2308,10 +2256,10 @@ void SetUpStates()
 
 
 	rs = rasterizers[RSTYPE_DOUBLESIDED];
-	//if (device->CheckCapability(GraphicsDeviceCapability::CONSERVATIVE_RASTERIZATION))
-	//{
-	//	rs.conservative_rasterization_enable = true;
-	//}
+	if (device->CheckCapability(GraphicsDeviceCapability::CONSERVATIVE_RASTERIZATION))
+	{
+		rs.conservative_rasterization_enable = true;
+	}
 	rasterizers[RSTYPE_LIGHTMAP] = rs;
 
 
@@ -2695,7 +2643,7 @@ void Initialize()
 	static wi::eventhandler::Handle handle2 = wi::eventhandler::Subscribe(wi::eventhandler::EVENT_RELOAD_SHADERS, [](uint64_t userdata) { LoadShaders(); });
 	LoadShaders();
 
-	wi::backlog::post("wi::renderer Initialized (" + std::to_string((int)std::round(timer.elapsed())) + " ms)");
+	wilog("wi::renderer Initialized (%d ms)", (int)std::round(timer.elapsed()));
 	initialized.store(true);
 }
 void ClearWorld(Scene& scene)
@@ -3817,12 +3765,12 @@ void UpdatePerFrameData(
 			desc.layout = ResourceState::SHADER_RESOURCE_COMPUTE;
 			device->CreateTexture(&desc, nullptr, &textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW]);
 			device->SetName(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW], "textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW]");
-			device->CreateTexture(&desc, nullptr, &textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED]);
-			device->SetName(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED], "textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED]");
+			device->CreateTexture(&desc, nullptr, &textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_GAUSSIAN_TEMP]);
+			device->SetName(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_GAUSSIAN_TEMP], "textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_GAUSSIAN_TEMP]");
 		}
 
 		const float cloudShadowSnapLength = 5000.0f;
-		const float cloudShadowExtent = 35000.0f; // The cloud shadow bounding box size
+		const float cloudShadowExtent = 10000.0f; // The cloud shadow bounding box size
 		const float cloudShadowNearPlane = 0.0f;
 		const float cloudShadowFarPlane = cloudShadowExtent * 2.0;
 
@@ -3854,7 +3802,7 @@ void UpdatePerFrameData(
 		XMStoreFloat4x4(&frameCB.cloudShadowLightSpaceMatrix, cloudShadowLightSpaceMatrix);
 		XMStoreFloat4x4(&frameCB.cloudShadowLightSpaceMatrixInverse, cloudShadowLightSpaceMatrixInverse);
 		frameCB.cloudShadowFarPlaneKm = cloudShadowFarPlane * metersToSkyUnit;
-		frameCB.texture_volumetricclouds_shadow_index = device->GetDescriptorIndex(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED], SubresourceType::SRV);
+		frameCB.texture_volumetricclouds_shadow_index = device->GetDescriptorIndex(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW], SubresourceType::SRV);
 	}
 
 	if (scene.weather.IsRealisticSky() && !textures[TEXTYPE_2D_SKYATMOSPHERE_TRANSMITTANCELUT].IsValid())
@@ -4038,10 +3986,13 @@ void UpdatePerFrameData(
 	frameCB.texture_wind_prev_index = device->GetDescriptorIndex(&textures[TEXTYPE_3D_WIND_PREV], SubresourceType::SRV);
 	frameCB.texture_caustics_index = device->GetDescriptorIndex(&textures[TEXTYPE_2D_CAUSTICS], SubresourceType::SRV);
 
-	frameCB.texture_shadowatlas_index = device->GetDescriptorIndex(&shadowMapAtlas, SubresourceType::SRV);
-	frameCB.texture_shadowatlas_transparent_index = device->GetDescriptorIndex(&shadowMapAtlas_Transparent, SubresourceType::SRV);
-	frameCB.shadow_atlas_resolution.x = shadowMapAtlas.desc.width;
-	frameCB.shadow_atlas_resolution.y = shadowMapAtlas.desc.height;
+	// Note: shadow maps always assumed to be valid to avoid shader branching logic
+	const Texture& shadowMap = shadowMapAtlas.IsValid() ? shadowMapAtlas : *wi::texturehelper::getBlack();
+	const Texture& shadowMapTransparent = shadowMapAtlas_Transparent.IsValid() ? shadowMapAtlas_Transparent : *wi::texturehelper::getWhite();
+	frameCB.texture_shadowatlas_index = device->GetDescriptorIndex(&shadowMap, SubresourceType::SRV);
+	frameCB.texture_shadowatlas_transparent_index = device->GetDescriptorIndex(&shadowMapTransparent, SubresourceType::SRV);
+	frameCB.shadow_atlas_resolution.x = shadowMap.desc.width;
+	frameCB.shadow_atlas_resolution.y = shadowMap.desc.height;
 	frameCB.shadow_atlas_resolution_rcp.x = 1.0f / frameCB.shadow_atlas_resolution.x;
 	frameCB.shadow_atlas_resolution_rcp.y = 1.0f / frameCB.shadow_atlas_resolution.y;
 
@@ -4599,7 +4550,6 @@ void UpdatePerFrameData(
 	frameCB.lights = ShaderEntityIterator(lightarray_offset, lightarray_count);
 	frameCB.decals = ShaderEntityIterator(decalarray_offset, decalarray_count);
 	frameCB.forces = ShaderEntityIterator(forcefieldarray_offset, forcefieldarray_count);
-
 }
 void UpdateRenderData(
 	const Visibility& vis,
@@ -4611,6 +4561,8 @@ void UpdateRenderData(
 
 	auto prof_updatebuffer_cpu = wi::profiler::BeginRangeCPU("Update Buffers (CPU)");
 	auto prof_updatebuffer_gpu = wi::profiler::BeginRangeGPU("Update Buffers (GPU)", cmd);
+
+	barrier_stack.push_back(GPUBarrier::Buffer(&vis.scene->meshletBuffer, ResourceState::SHADER_RESOURCE, ResourceState::UNORDERED_ACCESS));
 
 	barrier_stack.push_back(GPUBarrier::Buffer(&buffers[BUFFERTYPE_FRAMECB], ResourceState::CONSTANT_BUFFER, ResourceState::COPY_DST));
 	if (vis.scene->instanceBuffer.IsValid())
@@ -8061,7 +8013,6 @@ void ComputeVolumetricCloudShadows(
 
 		{
 			GPUBarrier barriers[] = {
-				GPUBarrier::Memory(),
 				GPUBarrier::Image(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW], ResourceState::UNORDERED_ACCESS, textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW].desc.layout),
 			};
 			device->Barrier(barriers, arraysize(barriers), cmd);
@@ -8070,49 +8021,14 @@ void ComputeVolumetricCloudShadows(
 		device->EventEnd(cmd);
 	}
 
-	auto CloudShadowFilter = [&](PostProcess& postprocess, CommandList cmd)
-	{
-		// Cloud shadow filter pass:
-		{
-			device->EventBegin("Volumetric Cloud Filter Shadow", cmd);
-			device->BindComputeShader(&shaders[CSTYPE_POSTPROCESS_VOLUMETRICCLOUDS_SHADOW_FILTER], cmd);
-			device->PushConstants(&postprocess, sizeof(postprocess), cmd);
-
-			device->BindResource(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW], 0, cmd);
-
-			const GPUResource* uavs[] = {
-				&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED],
-			};
-			device->BindUAVs(uavs, 0, arraysize(uavs), cmd);
-
-			{
-				GPUBarrier barriers[] = {
-					GPUBarrier::Image(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED], textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED].desc.layout, ResourceState::UNORDERED_ACCESS),
-				};
-				device->Barrier(barriers, arraysize(barriers), cmd);
-			}
-
-			device->Dispatch(
-				(textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED].GetDesc().width + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE,
-				(textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED].GetDesc().height + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE,
-				1,
-				cmd
-			);
-
-			{
-				GPUBarrier barriers[] = {
-					GPUBarrier::Image(&textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED], ResourceState::UNORDERED_ACCESS, textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_FILTERED].desc.layout),
-				};
-				device->Barrier(barriers, arraysize(barriers), cmd);
-			}
-
-			device->EventEnd(cmd);
-		}
-	};
-
-	// We filter twice for to avoid rapid changing pixels and to mimic penumbra
-	CloudShadowFilter(postprocess, cmd);
-	CloudShadowFilter(postprocess, cmd);
+	Postprocess_Blur_Gaussian(
+		textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW],
+		textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW_GAUSSIAN_TEMP],
+		textures[TEXTYPE_2D_VOLUMETRICCLOUDS_SHADOW],
+		cmd,
+		-1, -1,
+		false // wide
+	);
 
 	wi::profiler::EndRange(range);
 	device->EventEnd(cmd);
@@ -10293,97 +10209,143 @@ void RayTraceSceneBVH(const Scene& scene, CommandList cmd)
 
 void RefreshLightmaps(const Scene& scene, CommandList cmd)
 {
+	if (!scene.IsLightmapUpdateRequested())
+		return;
+	if (!scene.TLAS.IsValid() && !scene.BVH.IsValid())
+		return;
+
+	wi::jobsystem::Wait(raytracing_ctx);
+
 	const uint32_t lightmap_request_count = scene.lightmap_request_allocator.load();
-	if (lightmap_request_count > 0)
+
+	auto range = wi::profiler::BeginRangeGPU("Lightmap Processing", cmd);
+
+	BindCommonResources(cmd);
+
+	// Render lightmaps for each object:
+	for (uint32_t requestIndex = 0; requestIndex < lightmap_request_count; ++requestIndex)
 	{
-		auto range = wi::profiler::BeginRangeGPU("Lightmap Processing", cmd);
+		uint32_t objectIndex = *(scene.lightmap_requests.data() + requestIndex);
+		const ObjectComponent& object = scene.objects[objectIndex];
+		if (!object.lightmap.IsValid())
+			continue;
+		if (!object.lightmap_render.IsValid())
+			continue;
 
-		if (!scene.TLAS.IsValid() && !scene.BVH.IsValid())
-			return;
-
-		wi::jobsystem::Wait(raytracing_ctx);
-
-		BindCommonResources(cmd);
-
-		// Render lightmaps for each object:
-		for (uint32_t requestIndex = 0; requestIndex < lightmap_request_count; ++requestIndex)
+		if (object.IsLightmapRenderRequested())
 		{
-			uint32_t objectIndex = *(scene.lightmap_requests.data() + requestIndex);
-			const ObjectComponent& object = scene.objects[objectIndex];
-			if (!object.lightmap.IsValid())
-				continue;
-			if (!object.lightmap_render.IsValid())
-				continue;
+			device->EventBegin("RenderObjectLightMap", cmd);
 
-			if (object.IsLightmapRenderRequested())
+			const MeshComponent& mesh = scene.meshes[object.mesh_index];
+			assert(!mesh.vertex_atlas.empty());
+			assert(mesh.vb_atl.IsValid());
+
+			const TextureDesc& desc = object.lightmap_render.GetDesc();
+
+			static Texture lightmap_color_tmp;
+			static Texture lightmap_depth_tmp;
+			if (lightmap_color_tmp.desc.width < object.lightmap.desc.width || lightmap_color_tmp.desc.height < object.lightmap.desc.height)
 			{
-				device->EventBegin("RenderObjectLightMap", cmd);
+				lightmap_color_tmp.desc = object.lightmap.desc;
+				lightmap_color_tmp.desc.misc_flags = ResourceMiscFlag::ALIASING_TEXTURE_RT_DS;
+				device->CreateTexture(&lightmap_color_tmp.desc, nullptr, &lightmap_color_tmp);
 
-				const MeshComponent& mesh = scene.meshes[object.mesh_index];
-				assert(!mesh.vertex_atlas.empty());
-				assert(mesh.vb_atl.IsValid());
+				lightmap_depth_tmp.desc.width = object.lightmap.desc.width;
+				lightmap_depth_tmp.desc.height = object.lightmap.desc.height;
+				lightmap_depth_tmp.desc.format = Format::D16_UNORM;
+				lightmap_depth_tmp.desc.bind_flags = BindFlag::DEPTH_STENCIL;
+				lightmap_depth_tmp.desc.layout = ResourceState::DEPTHSTENCIL;
+				device->CreateTexture(&lightmap_depth_tmp.desc, nullptr, &lightmap_depth_tmp, &lightmap_color_tmp); // aliased!
+			}
 
-				const TextureDesc& desc = object.lightmap_render.GetDesc();
+			device->Barrier(GPUBarrier::Aliasing(&lightmap_color_tmp, &lightmap_depth_tmp), cmd);
 
-				if (object.lightmapIterationCount == 0)
-				{
-					RenderPassImage rp = RenderPassImage::RenderTarget(&object.lightmap_render, RenderPassImage::LoadOp::CLEAR);
-					device->RenderPassBegin(&rp, 1, cmd);
-				}
-				else
-				{
-					RenderPassImage rp = RenderPassImage::RenderTarget(&object.lightmap_render, RenderPassImage::LoadOp::LOAD);
-					device->RenderPassBegin(&rp, 1, cmd);
-				}
+			// Note: depth is used to disallow overlapped pixel/primitive writes with conservative rasterization!
+			if (object.lightmapIterationCount == 0)
+			{
+				RenderPassImage rp[] = {
+					RenderPassImage::RenderTarget(&object.lightmap_render, RenderPassImage::LoadOp::CLEAR),
+					RenderPassImage::DepthStencil(&lightmap_depth_tmp, RenderPassImage::LoadOp::CLEAR),
+				};
+				device->RenderPassBegin(rp, arraysize(rp), cmd);
+			}
+			else
+			{
+				RenderPassImage rp[] = {
+					RenderPassImage::RenderTarget(&object.lightmap_render, RenderPassImage::LoadOp::LOAD),
+					RenderPassImage::DepthStencil(&lightmap_depth_tmp, RenderPassImage::LoadOp::CLEAR),
+				};
+				device->RenderPassBegin(rp, arraysize(rp), cmd);
+			}
 
-				Viewport vp;
-				vp.width = (float)desc.width;
-				vp.height = (float)desc.height;
-				device->BindViewports(1, &vp, cmd);
+			Viewport vp;
+			vp.width = (float)desc.width;
+			vp.height = (float)desc.height;
+			device->BindViewports(1, &vp, cmd);
 
-				device->BindPipelineState(&PSO_renderlightmap, cmd);
+			device->BindPipelineState(&PSO_renderlightmap, cmd);
 
-				device->BindIndexBuffer(&mesh.generalBuffer, mesh.GetIndexFormat(), mesh.ib.offset, cmd);
+			device->BindIndexBuffer(&mesh.generalBuffer, mesh.GetIndexFormat(), mesh.ib.offset, cmd);
 
-				LightmapPushConstants push;
-				push.vb_pos_wind = mesh.vb_pos_wind.descriptor_srv;
-				push.vb_nor = mesh.vb_nor.descriptor_srv;
-				push.vb_atl = mesh.vb_atl.descriptor_srv;
-				push.instanceIndex = objectIndex;
-				device->PushConstants(&push, sizeof(push), cmd);
+			LightmapPushConstants push;
+			push.vb_pos_wind = mesh.vb_pos_wind.descriptor_srv;
+			push.vb_nor = mesh.vb_nor.descriptor_srv;
+			push.vb_atl = mesh.vb_atl.descriptor_srv;
+			push.instanceIndex = objectIndex;
+			device->PushConstants(&push, sizeof(push), cmd);
 
-				RaytracingCB cb = {};
-				cb.xTraceResolution.x = desc.width;
-				cb.xTraceResolution.y = desc.height;
-				cb.xTraceResolution_rcp.x = 1.0f / cb.xTraceResolution.x;
-				cb.xTraceResolution_rcp.y = 1.0f / cb.xTraceResolution.y;
-				cb.xTraceAccumulationFactor = 1.0f / (object.lightmapIterationCount + 1.0f); // accumulation factor (alpha)
-				cb.xTraceUserData.x = raytraceBounceCount;
-				uint8_t instanceInclusionMask = 0xFF;
-				cb.xTraceUserData.y = instanceInclusionMask;
-				cb.xTraceSampleIndex = object.lightmapIterationCount;
-				device->BindDynamicConstantBuffer(cb, CB_GETBINDSLOT(RaytracingCB), cmd);
+			RaytracingCB cb = {};
+			cb.xTraceResolution.x = desc.width;
+			cb.xTraceResolution.y = desc.height;
+			cb.xTraceResolution_rcp.x = 1.0f / cb.xTraceResolution.x;
+			cb.xTraceResolution_rcp.y = 1.0f / cb.xTraceResolution.y;
+			cb.xTraceAccumulationFactor = 1.0f / (object.lightmapIterationCount + 1.0f); // accumulation factor (alpha)
+			cb.xTraceUserData.x = raytraceBounceCount;
+			XMFLOAT4 halton = wi::math::GetHaltonSequence(object.lightmapIterationCount); // for jittering the rasterization (good for eliminating atlas border artifacts)
+			cb.xTracePixelOffset.x = (halton.x * 2 - 1) * cb.xTraceResolution_rcp.x;
+			cb.xTracePixelOffset.y = (halton.y * 2 - 1) * cb.xTraceResolution_rcp.y;
+			cb.xTracePixelOffset.x *= 1.4f;	// boost the jitter by a bit
+			cb.xTracePixelOffset.y *= 1.4f;	// boost the jitter by a bit
+			uint8_t instanceInclusionMask = 0xFF;
+			cb.xTraceUserData.y = instanceInclusionMask;
+			cb.xTraceSampleIndex = object.lightmapIterationCount;
+			device->BindDynamicConstantBuffer(cb, CB_GETBINDSLOT(RaytracingCB), cmd);
 
-				uint32_t first_subset = 0;
-				uint32_t last_subset = 0;
-				mesh.GetLODSubsetRange(0, first_subset, last_subset);
-				for (uint32_t subsetIndex = first_subset; subsetIndex < last_subset; ++subsetIndex)
-				{
-					const MeshComponent::MeshSubset& subset = mesh.subsets[subsetIndex];
-					if (subset.indexCount == 0)
-						continue;
-					device->DrawIndexed(subset.indexCount, subset.indexOffset, 0, cmd);
-				}
+			uint32_t indexStart = ~0u;
+			uint32_t indexEnd = 0;
+
+			uint32_t first_subset = 0;
+			uint32_t last_subset = 0;
+			mesh.GetLODSubsetRange(0, first_subset, last_subset);
+			for (uint32_t subsetIndex = first_subset; subsetIndex < last_subset; ++subsetIndex)
+			{
+				const MeshComponent::MeshSubset& subset = mesh.subsets[subsetIndex];
+				if (subset.indexCount == 0)
+					continue;
+				indexStart = std::min(indexStart, subset.indexOffset);
+				indexEnd = std::max(indexEnd, subset.indexOffset + subset.indexCount);
+			}
+
+			if (indexEnd > indexStart)
+			{
+				const uint32_t indexCount = indexEnd - indexStart;
+				device->DrawIndexed(indexCount, indexStart, 0, cmd);
 				object.lightmapIterationCount++;
+			}
 
-				device->RenderPassEnd(cmd);
+			device->RenderPassEnd(cmd);
 
-				// Expand opaque areas:
+			device->Barrier(GPUBarrier::Aliasing(&lightmap_depth_tmp, &lightmap_color_tmp), cmd);
+
+			// Expand opaque areas:
+			{
+				device->EventBegin("Lightmap expand", cmd);
+
+				device->BindComputeShader(&shaders[CSTYPE_LIGHTMAP_EXPAND], cmd);
+
+				// render -> lightmap
 				{
-					device->BindComputeShader(&shaders[CSTYPE_LIGHTMAP_EXPAND], cmd);
-
 					device->BindResource(&object.lightmap_render, 0, cmd);
-
 					device->BindUAV(&object.lightmap, 0, cmd);
 
 					device->Barrier(GPUBarrier::Image(&object.lightmap, object.lightmap.desc.layout, ResourceState::UNORDERED_ACCESS), cmd);
@@ -10392,13 +10354,40 @@ void RefreshLightmaps(const Scene& scene, CommandList cmd)
 
 					device->Barrier(GPUBarrier::Image(&object.lightmap, ResourceState::UNORDERED_ACCESS, object.lightmap.desc.layout), cmd);
 				}
+				for (int repeat = 0; repeat < 2; ++repeat)
+				{
+					// lightmap -> temp
+					{
+						device->BindResource(&object.lightmap, 0, cmd);
+						device->BindUAV(&lightmap_color_tmp, 0, cmd);
 
+						device->Barrier(GPUBarrier::Image(&lightmap_color_tmp, lightmap_color_tmp.desc.layout, ResourceState::UNORDERED_ACCESS), cmd);
+
+						device->Dispatch((desc.width + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE, (desc.height + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE, 1, cmd);
+
+						device->Barrier(GPUBarrier::Image(&lightmap_color_tmp, ResourceState::UNORDERED_ACCESS, lightmap_color_tmp.desc.layout), cmd);
+					}
+					// temp -> lightmap
+					{
+						device->BindResource(&lightmap_color_tmp, 0, cmd);
+						device->BindUAV(&object.lightmap, 0, cmd);
+
+						device->Barrier(GPUBarrier::Image(&object.lightmap, object.lightmap.desc.layout, ResourceState::UNORDERED_ACCESS), cmd);
+
+						device->Dispatch((desc.width + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE, (desc.height + POSTPROCESS_BLOCKSIZE - 1) / POSTPROCESS_BLOCKSIZE, 1, cmd);
+
+						device->Barrier(GPUBarrier::Image(&object.lightmap, ResourceState::UNORDERED_ACCESS, object.lightmap.desc.layout), cmd);
+					}
+				}
 				device->EventEnd(cmd);
 			}
-		}
 
-		wi::profiler::EndRange(range);
+			device->EventEnd(cmd);
+		}
 	}
+
+	wi::profiler::EndRange(range);
+
 }
 
 void RefreshWetmaps(const Visibility& vis, CommandList cmd)
@@ -10734,7 +10723,7 @@ void ComputeBloom(
 		bloom.exposure = exposure;
 		bloom.texture_input = device->GetDescriptorIndex(&input, SubresourceType::SRV);
 		bloom.texture_output = device->GetDescriptorIndex(&res.texture_bloom, SubresourceType::UAV);
-		bloom.buffer_input_luminance = device->GetDescriptorIndex((buffer_luminance == nullptr) ? &luminance_dummy : buffer_luminance, SubresourceType::SRV);
+		bloom.buffer_input_luminance = device->GetDescriptorIndex(buffer_luminance, SubresourceType::SRV);
 		device->PushConstants(&bloom, sizeof(bloom), cmd);
 
 		device->Dispatch(
@@ -15903,7 +15892,7 @@ void Postprocess_AerialPerspective(
 }
 void CreateVolumetricCloudResources(VolumetricCloudResources& res, XMUINT2 resolution)
 {
-	res.frame = 0;
+	res.ResetFrame();
 	res.final_resolution = resolution;
 
 	TextureDesc desc;
@@ -15911,7 +15900,7 @@ void CreateVolumetricCloudResources(VolumetricCloudResources& res, XMUINT2 resol
 	desc.width = resolution.x / 4;
 	desc.height = resolution.y / 4;
 	desc.format = Format::R16G16B16A16_FLOAT;
-	desc.layout = ResourceState::SHADER_RESOURCE;
+	desc.layout = ResourceState::SHADER_RESOURCE_COMPUTE;
 	device->CreateTexture(&desc, nullptr, &res.texture_cloudRender);
 	device->SetName(&res.texture_cloudRender, "texture_cloudRender");
 	desc.format = Format::R32G32_FLOAT;
@@ -15976,6 +15965,7 @@ void Postprocess_VolumetricClouds(
 	postprocess.resolution.y = res.final_resolution.y / 4;
 	postprocess.resolution_rcp.x = 1.0f / postprocess.resolution.x;
 	postprocess.resolution_rcp.y = 1.0f / postprocess.resolution.y;
+	volumetricclouds_frame = (float)res.frame;
 
 	// Parse reproject info
 	postprocess.params0.x = (float)res.texture_reproject[0].GetDesc().width;
@@ -16040,11 +16030,9 @@ void Postprocess_VolumetricClouds(
 	postprocess.resolution.y = res.final_resolution.y / 2;
 	postprocess.resolution_rcp.x = 1.0f / postprocess.resolution.x;
 	postprocess.resolution_rcp.y = 1.0f / postprocess.resolution.y;
-	volumetricclouds_frame = (float)res.frame;
-	res.frame++; // before temporal_output index is computed!
 	
-	int temporal_output = res.frame % 2;
-	int temporal_history = 1 - temporal_output;
+	int temporal_output = res.GetTemporalOutputIndex();
+	int temporal_history = res.GetTemporalInputIndex();
 
 	{
 		GPUBarrier barriers[] = {
@@ -16091,7 +16079,6 @@ void Postprocess_VolumetricClouds(
 
 	{
 		GPUBarrier barriers[] = {
-			GPUBarrier::Memory(),
 			GPUBarrier::Image(&res.texture_reproject[temporal_output], ResourceState::UNORDERED_ACCESS, res.texture_reproject[temporal_output].desc.layout),
 			GPUBarrier::Image(&res.texture_reproject_depth[temporal_output], ResourceState::UNORDERED_ACCESS, res.texture_reproject_depth[temporal_output].desc.layout),
 			GPUBarrier::Image(&res.texture_reproject_additional[temporal_output], ResourceState::UNORDERED_ACCESS, res.texture_reproject_additional[temporal_output].desc.layout),
@@ -16119,7 +16106,7 @@ void Postprocess_VolumetricClouds_Upsample(
 	PostProcess postprocess;
 	volumetricclouds_frame = (float)res.frame;
 
-	int temporal_output = res.frame % 2;
+	int temporal_output = res.GetTemporalOutputIndex();
 
 	// Render full-res: (output)
 	postprocess.resolution.x = res.final_resolution.x;
@@ -16287,7 +16274,6 @@ void Postprocess_TemporalAA(
 
 	{
 		GPUBarrier barriers[] = {
-			GPUBarrier::Memory(),
 			GPUBarrier::Image(output, ResourceState::UNORDERED_ACCESS, output->GetDesc().layout),
 		};
 		device->Barrier(barriers, arraysize(barriers), cmd);
@@ -16420,7 +16406,7 @@ void Postprocess_Tonemap(
 	}
 	tonemap_push.flags_hdrcalibration |= XMConvertFloatToHalf(hdr_calibration) << 16u;
 	tonemap_push.texture_input = device->GetDescriptorIndex(&input, SubresourceType::SRV);
-	tonemap_push.buffer_input_luminance = device->GetDescriptorIndex((buffer_luminance == nullptr) ? &luminance_dummy : buffer_luminance, SubresourceType::SRV);
+	tonemap_push.buffer_input_luminance = device->GetDescriptorIndex(buffer_luminance, SubresourceType::SRV);
 	tonemap_push.texture_input_distortion = device->GetDescriptorIndex(texture_distortion, SubresourceType::SRV);
 	tonemap_push.texture_input_distortion_overlay = device->GetDescriptorIndex(texture_distortion_overlay, SubresourceType::SRV);
 	tonemap_push.texture_colorgrade_lookuptable = device->GetDescriptorIndex(texture_colorgradinglut, SubresourceType::SRV);
@@ -18284,6 +18270,7 @@ wi::Resource CreatePaintableTexture(uint32_t width, uint32_t height, uint32_t mi
 	}
 	desc.format = Format::R8G8B8A8_UNORM;
 	desc.bind_flags = BindFlag::SHADER_RESOURCE | BindFlag::UNORDERED_ACCESS | BindFlag::RENDER_TARGET;
+	desc.misc_flags = ResourceMiscFlag::TYPED_FORMAT_CASTING;
 	wi::vector<wi::Color> data(desc.width * desc.height);
 	std::fill(data.begin(), data.end(), initialColor);
 	SubresourceData initdata[32] = {};

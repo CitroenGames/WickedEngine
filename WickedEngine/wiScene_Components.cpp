@@ -769,6 +769,8 @@ namespace wi::scene
 		}
 
 		// Determine UV range for normalization:
+		size_t uv_stride = sizeof(Vertex_UVS);
+		Format uv_format = Vertex_UVS::FORMAT;
 		if (!vertex_uvset_0.empty() || !vertex_uvset_1.empty())
 		{
 			const XMFLOAT2* uv0_stream = vertex_uvset_0.empty() ? vertex_uvset_1.data() : vertex_uvset_0.data();
@@ -782,6 +784,13 @@ namespace wi::scene
 				uv_range_max = wi::math::Max(uv_range_max, uv1_stream[i]);
 				uv_range_min = wi::math::Min(uv_range_min, uv0_stream[i]);
 				uv_range_min = wi::math::Min(uv_range_min, uv1_stream[i]);
+			}
+
+			if (std::abs(uv_range_max.x - uv_range_min.x) > 65536 || std::abs(uv_range_max.y - uv_range_min.y) > 65536)
+			{
+				// The bounding box of UVs is too large, fall back to full precision UVs:
+				uv_stride = sizeof(Vertex_UVS32);
+				uv_format = Vertex_UVS32::FORMAT;
 			}
 		}
 
@@ -809,7 +818,7 @@ namespace wi::scene
 			AlignTo(indices.size() * GetIndexStride(), alignment) +
 			AlignTo(vertex_normals.size() * sizeof(Vertex_NOR), alignment) +
 			AlignTo(vertex_tangents.size() * sizeof(Vertex_TAN), alignment) +
-			AlignTo(uv_count * sizeof(Vertex_UVS), alignment) +
+			AlignTo(uv_count * uv_stride, alignment) +
 			AlignTo(vertex_atlas.size() * sizeof(Vertex_TEX), alignment) +
 			AlignTo(vertex_colors.size() * sizeof(Vertex_COL), alignment) +
 			AlignTo(vertex_boneindices.size() * sizeof(Vertex_BON), alignment) +
@@ -1058,15 +1067,30 @@ namespace wi::scene
 				const XMFLOAT2* uv1_stream = vertex_uvset_1.empty() ? vertex_uvset_0.data() : vertex_uvset_1.data();
 
 				vb_uvs.offset = buffer_offset;
-				vb_uvs.size = uv_count * sizeof(Vertex_UVS);
-				Vertex_UVS* vertices = (Vertex_UVS*)(buffer_data + buffer_offset);
-				buffer_offset += AlignTo(vb_uvs.size, alignment);
-				for (size_t i = 0; i < uv_count; ++i)
+				vb_uvs.size = uv_count * uv_stride;
+				if (uv_stride == sizeof(Vertex_UVS))
 				{
-					Vertex_UVS vert;
-					vert.uv0.FromFULL(uv0_stream[i], uv_range_min, uv_range_max);
-					vert.uv1.FromFULL(uv1_stream[i], uv_range_min, uv_range_max);
-					std::memcpy(vertices + i, &vert, sizeof(vert));
+					Vertex_UVS* vertices = (Vertex_UVS*)(buffer_data + buffer_offset);
+					buffer_offset += AlignTo(vb_uvs.size, alignment);
+					for (size_t i = 0; i < uv_count; ++i)
+					{
+						Vertex_UVS vert;
+						vert.uv0.FromFULL(uv0_stream[i], uv_range_min, uv_range_max);
+						vert.uv1.FromFULL(uv1_stream[i], uv_range_min, uv_range_max);
+						std::memcpy(vertices + i, &vert, sizeof(vert));
+					}
+				}
+				else
+				{
+					Vertex_UVS32* vertices = (Vertex_UVS32*)(buffer_data + buffer_offset);
+					buffer_offset += AlignTo(vb_uvs.size, alignment);
+					for (size_t i = 0; i < uv_count; ++i)
+					{
+						Vertex_UVS32 vert;
+						vert.uv0.FromFULL(uv0_stream[i], uv_range_min, uv_range_max);
+						vert.uv1.FromFULL(uv1_stream[i], uv_range_min, uv_range_max);
+						std::memcpy(vertices + i, &vert, sizeof(vert));
+					}
 				}
 			}
 
@@ -1267,7 +1291,7 @@ namespace wi::scene
 		}
 		if (vb_uvs.IsValid())
 		{
-			vb_uvs.subresource_srv = device->CreateSubresource(&generalBuffer, SubresourceType::SRV, vb_uvs.offset, vb_uvs.size, &Vertex_UVS::FORMAT);
+			vb_uvs.subresource_srv = device->CreateSubresource(&generalBuffer, SubresourceType::SRV, vb_uvs.offset, vb_uvs.size, &uv_format);
 			vb_uvs.descriptor_srv = device->GetDescriptorIndex(&generalBuffer, SubresourceType::SRV, vb_uvs.subresource_srv);
 		}
 		if (vb_atl.IsValid())
@@ -1323,8 +1347,8 @@ namespace wi::scene
 
 		const uint64_t alignment = device->GetMinOffsetAlignment(&desc) * sizeof(Vertex_POS32); // additional alignment for RGB32F
 		desc.size =
-			AlignTo(vertex_positions.size() * sizeof(Vertex_POS32), alignment) + // pos
-			AlignTo(vertex_positions.size() * sizeof(Vertex_POS32), alignment) + // prevpos
+			AlignTo(vertex_positions.size() * sizeof(Vertex_POS32W), alignment) + // pos
+			AlignTo(vertex_positions.size() * sizeof(Vertex_POS32W), alignment) + // prevpos
 			AlignTo(vertex_normals.size() * sizeof(Vertex_NOR), alignment) +
 			AlignTo(vertex_tangents.size() * sizeof(Vertex_TAN), alignment)
 			;
@@ -1336,18 +1360,18 @@ namespace wi::scene
 		uint64_t buffer_offset = 0ull;
 
 		so_pos.offset = buffer_offset;
-		so_pos.size = vertex_positions.size() * sizeof(Vertex_POS32);
+		so_pos.size = vertex_positions.size() * sizeof(Vertex_POS32W);
 		buffer_offset += AlignTo(so_pos.size, alignment);
-		so_pos.subresource_srv = device->CreateSubresource(&streamoutBuffer, SubresourceType::SRV, so_pos.offset, so_pos.size, &Vertex_POS32::FORMAT);
-		so_pos.subresource_uav = device->CreateSubresource(&streamoutBuffer, SubresourceType::UAV, so_pos.offset, so_pos.size); // UAV can't have RGB32_F format!
+		so_pos.subresource_srv = device->CreateSubresource(&streamoutBuffer, SubresourceType::SRV, so_pos.offset, so_pos.size, &Vertex_POS32W::FORMAT);
+		so_pos.subresource_uav = device->CreateSubresource(&streamoutBuffer, SubresourceType::UAV, so_pos.offset, so_pos.size, &Vertex_POS32W::FORMAT); // UAV can't have RGB32_F format!
 		so_pos.descriptor_srv = device->GetDescriptorIndex(&streamoutBuffer, SubresourceType::SRV, so_pos.subresource_srv);
 		so_pos.descriptor_uav = device->GetDescriptorIndex(&streamoutBuffer, SubresourceType::UAV, so_pos.subresource_uav);
 
 		so_pre.offset = buffer_offset;
 		so_pre.size = so_pos.size;
 		buffer_offset += AlignTo(so_pre.size, alignment);
-		so_pre.subresource_srv = device->CreateSubresource(&streamoutBuffer, SubresourceType::SRV, so_pre.offset, so_pre.size, &Vertex_POS32::FORMAT);
-		so_pre.subresource_uav = device->CreateSubresource(&streamoutBuffer, SubresourceType::UAV, so_pre.offset, so_pre.size); // UAV can't have RGB32_F format!
+		so_pre.subresource_srv = device->CreateSubresource(&streamoutBuffer, SubresourceType::SRV, so_pre.offset, so_pre.size, &Vertex_POS32W::FORMAT);
+		so_pre.subresource_uav = device->CreateSubresource(&streamoutBuffer, SubresourceType::UAV, so_pre.offset, so_pre.size, &Vertex_POS32W::FORMAT); // UAV can't have RGB32_F format!
 		so_pre.descriptor_srv = device->GetDescriptorIndex(&streamoutBuffer, SubresourceType::SRV, so_pre.subresource_srv);
 		so_pre.descriptor_uav = device->GetDescriptorIndex(&streamoutBuffer, SubresourceType::UAV, so_pre.subresource_uav);
 
@@ -1417,8 +1441,8 @@ namespace wi::scene
 				geometry.triangles.vertex_count = (uint32_t)vertex_positions.size();
 				if (so_pos.IsValid())
 				{
-					geometry.triangles.vertex_format = Vertex_POS32::FORMAT;
-					geometry.triangles.vertex_stride = sizeof(Vertex_POS32);
+					geometry.triangles.vertex_format = Format::R32G32B32_FLOAT;
+					geometry.triangles.vertex_stride = sizeof(Vertex_POS32W);
 				}
 				else
 				{

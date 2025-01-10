@@ -25,6 +25,7 @@
 #include <Psapi.h> // GetProcessMemoryInfo
 #include <Commdlg.h> // openfile
 #include <WinBase.h>
+#include <comdef.h> // com_error
 #elif defined(PLATFORM_PS5)
 #else
 #include "Utility/portable-file-dialogs.h"
@@ -965,6 +966,13 @@ namespace wi::helper
 #define ToNativeString(x) (x)
 #endif // _WIN32
 
+	std::string FromWString(const std::wstring& fileName)
+	{
+		std::string fileName_u8;
+		StringConvert(fileName, fileName_u8);
+		return fileName_u8;
+	}
+
 	std::string GetPathRelative(const std::string& rootdir, const std::string& path)
 	{
 		std::string ret = path;
@@ -986,7 +994,7 @@ namespace wi::helper
 			std::filesystem::path relative = std::filesystem::relative(filepath, rootpath);
 			if (!relative.empty())
 			{
-				path = to_string(relative.generic_u8string());
+				StringConvert(relative.generic_wstring(), path);
 			}
 		}
 
@@ -997,7 +1005,7 @@ namespace wi::helper
 		std::filesystem::path absolute = std::filesystem::absolute(ToNativeString(path));
 		if (!absolute.empty())
 		{
-			path = to_string(absolute.generic_u8string());
+			StringConvert(absolute.generic_wstring(), path);
 		}
 	}
 
@@ -1086,7 +1094,7 @@ namespace wi::helper
 		return "";
 #else
 		auto path = std::filesystem::temp_directory_path();
-		return to_string(path.generic_u8string());
+		return FromWString(path.generic_wstring());
 #endif // PLATFORM_XBOX || PLATFORM_PS5
 	}
 
@@ -1116,7 +1124,7 @@ namespace wi::helper
 		return "/app0";
 #else
 		auto path = std::filesystem::current_path();
-		return to_string(path.generic_u8string());
+		return FromWString(path.generic_wstring());
 #endif // PLATFORM_PS5
 	}
 
@@ -1262,16 +1270,8 @@ namespace wi::helper
 		{
 			if (entry.is_directory())
 				continue;
-
-			// Get the filename as a std::u8string first
-			std::u8string u8filename = entry.path().filename().generic_u8string();
-			std::string filename = to_string(u8filename);
-
-			// Perform your checks/operations
-			// Assuming you have wi::helper::toUpper and wi::helper::GetExtensionFromFileName
-			// Replace them with your own implementations or remove them if not needed.
-			if (filter_extension.empty() ||
-				wi::helper::toUpper(wi::helper::GetExtensionFromFileName(filename)) == wi::helper::toUpper(filter_extension))
+			std::string filename = FromWString(entry.path().filename().generic_wstring());
+			if (filter_extension.empty() || wi::helper::toUpper(wi::helper::GetExtensionFromFileName(filename)).compare(wi::helper::toUpper(filter_extension)) == 0)
 			{
 				onSuccess(directory + filename);
 			}
@@ -1288,11 +1288,7 @@ namespace wi::helper
 		{
 			if (!entry.is_directory())
 				continue;
-
-			// Get the folder name as a std::u8string first
-			std::u8string u8filename = entry.path().filename().generic_u8string();
-			std::string filename = to_string(u8filename);
-
+			std::string filename = FromWString(entry.path().filename().generic_wstring());
 			onSuccess(directory + filename);
 		}
 	}
@@ -1559,5 +1555,22 @@ namespace wi::helper
 			ss << timerSeconds / 60 / 60 << " hours";
 		}
 		return ss.str();
+	}
+
+	std::string GetPlatformErrorString(wi::platform::error_type code)
+	{
+		std::string str;
+
+#ifdef _WIN32
+		_com_error err(code);
+		LPCTSTR errMsg = err.ErrorMessage();
+		wchar_t wtext[1024] = {};
+		_snwprintf_s(wtext, arraysize(wtext), arraysize(wtext), L"0x%08x (%s)", code, errMsg);
+		char text[1024] = {};
+		wi::helper::StringConvert(wtext, text, arraysize(text));
+		str = text;
+#endif // _WIN32
+
+		return str;
 	}
 }

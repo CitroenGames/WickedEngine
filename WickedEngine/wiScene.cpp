@@ -782,14 +782,13 @@ namespace wi::scene
 
 				const uint64_t alignment =
 					device->GetMinOffsetAlignment(&desc) *
-					sizeof(IndirectDrawArgsIndexedInstanced) * // additional alignment
-					sizeof(MeshComponent::Vertex_POS32) // additional alignment
+					sizeof(IndirectDrawArgsIndexedInstanced) // additional alignment
 					;
 
 				desc.size =
 					AlignTo(sizeof(IndirectDrawArgsIndexedInstanced), alignment) +	// indirect args
 					AlignTo(allocated_impostor_capacity * sizeof(uint) * 6, alignment) +	// indices (must overestimate here for 32-bit indices, because we create 16 bit and 32 bit descriptors)
-					AlignTo(allocated_impostor_capacity * sizeof(MeshComponent::Vertex_POS32) * 4, alignment) +	// vertices
+					AlignTo(allocated_impostor_capacity * sizeof(MeshComponent::Vertex_POS32W) * 4, alignment) +	// vertices
 					AlignTo(allocated_impostor_capacity * sizeof(MeshComponent::Vertex_NOR) * 4, alignment) +	// vertices
 					AlignTo(allocated_impostor_capacity * sizeof(uint2), alignment)		// impostordata
 				;
@@ -799,7 +798,6 @@ namespace wi::scene
 				uint64_t buffer_offset = 0ull;
 
 				const uint32_t indirect_stride = sizeof(IndirectDrawArgsIndexedInstanced);
-				buffer_offset = AlignTo(buffer_offset, sizeof(IndirectDrawArgsIndexedInstanced)); // additional structured buffer alignment
 				buffer_offset = AlignTo(buffer_offset, alignment);
 				impostor_indirect.offset = buffer_offset;
 				impostor_indirect.size = sizeof(IndirectDrawArgsIndexedInstanced);
@@ -826,9 +824,9 @@ namespace wi::scene
 
 				buffer_offset = AlignTo(buffer_offset, alignment);
 				impostor_vb_pos.offset = buffer_offset;
-				impostor_vb_pos.size = allocated_impostor_capacity * sizeof(MeshComponent::Vertex_POS32) * 4;
-				impostor_vb_pos.subresource_srv = device->CreateSubresource(&impostorBuffer, SubresourceType::SRV, impostor_vb_pos.offset, impostor_vb_pos.size, &MeshComponent::Vertex_POS32::FORMAT);
-				impostor_vb_pos.subresource_uav = device->CreateSubresource(&impostorBuffer, SubresourceType::UAV, impostor_vb_pos.offset, impostor_vb_pos.size); // can't have RGB32F format for UAV!
+				impostor_vb_pos.size = allocated_impostor_capacity * sizeof(MeshComponent::Vertex_POS32W) * 4;
+				impostor_vb_pos.subresource_srv = device->CreateSubresource(&impostorBuffer, SubresourceType::SRV, impostor_vb_pos.offset, impostor_vb_pos.size, &MeshComponent::Vertex_POS32W::FORMAT);
+				impostor_vb_pos.subresource_uav = device->CreateSubresource(&impostorBuffer, SubresourceType::UAV, impostor_vb_pos.offset, impostor_vb_pos.size, &MeshComponent::Vertex_POS32W::FORMAT); // can't have RGB32F format for UAV!
 				impostor_vb_pos.descriptor_srv = device->GetDescriptorIndex(&impostorBuffer, SubresourceType::SRV, impostor_vb_pos.subresource_srv);
 				impostor_vb_pos.descriptor_uav = device->GetDescriptorIndex(&impostorBuffer, SubresourceType::UAV, impostor_vb_pos.subresource_uav);
 				buffer_offset += impostor_vb_pos.size;
@@ -1220,9 +1218,7 @@ namespace wi::scene
 
 		Merge(*tmp);
 
-		char text[64] = {};
-		snprintf(text, arraysize(text), "Scene::Instantiate took %.2f ms", timer.elapsed_milliseconds());
-		wi::backlog::post(text);
+		wilog("Scene::Instantiate took %.2f ms", timer.elapsed_milliseconds());
 
 		return rootEntity;
 	}
@@ -4471,8 +4467,8 @@ namespace wi::scene
 
 				//// Correction matrix for mesh normals with non-uniform object scaling:
 				//XMMATRIX worldMatrixInverseTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, W));
-				//XMFLOAT4X4 transformIT;
-				//XMStoreFloat4x4(&transformIT, worldMatrixInverseTranspose);
+				//XMFLOAT4X4 transformNormal;
+				//XMStoreFloat4x4(&transformNormal, worldMatrixInverseTranspose);
 
 				// Create GPU instance data:
 				ShaderMeshInstance inst;
@@ -4493,12 +4489,8 @@ namespace wi::scene
 				inst.transform.Create(worldMatrix);
 				inst.transformPrev.Create(worldMatrixPrev);
 
-				// Get the quaternion from W because that reflects changes by other components (eg. softbody)
 				XMVECTOR S, R, T;
 				XMMatrixDecompose(&S, &R, &T, W);
-				XMFLOAT4 quaternionFP32;
-				XMStoreFloat4(&quaternionFP32, R);
-				inst.quaternion = wi::math::pack_half4(quaternionFP32);
 				float size = std::max(XMVectorGetX(S), std::max(XMVectorGetY(S), XMVectorGetZ(S)));
 
 				if (object.lightmap.IsValid())
@@ -4507,7 +4499,7 @@ namespace wi::scene
 				}
 				inst.uid = entity;
 				inst.layerMask = layerMask;
-				inst.color = wi::math::CompressColor(object.color);
+				inst.color = wi::math::pack_half4(object.color);
 				inst.emissive = wi::math::pack_half3(XMFLOAT3(object.emissiveColor.x * object.emissiveColor.w, object.emissiveColor.y * object.emissiveColor.w, object.emissiveColor.z * object.emissiveColor.w));
 				inst.baseGeometryOffset = mesh.geometryOffset;
 				inst.baseGeometryCount = (uint)mesh.subsets.size();
@@ -4582,6 +4574,9 @@ namespace wi::scene
 						object.lightmapWidth = wi::graphics::AlignTo(object.lightmapWidth, 4u);
 						object.lightmapHeight = wi::graphics::AlignTo(object.lightmapHeight, 4u);
 
+						object.lightmapWidth = clamp(object.lightmapWidth, 16u, 16384u);
+						object.lightmapHeight = clamp(object.lightmapHeight, 16u, 16384u);
+
 						TextureDesc desc;
 						desc.width = object.lightmapWidth;
 						desc.height = object.lightmapHeight;
@@ -4615,6 +4610,10 @@ namespace wi::scene
 					if (lightmap_size == object.lightmapWidth * object.lightmapHeight * sizeof(XMFLOAT4))
 					{
 						object.lightmap.desc.format = Format::R32G32B32A32_FLOAT;
+					}
+					else if (lightmap_size == object.lightmapWidth * object.lightmapHeight * sizeof(XMHALF4))
+					{
+						object.lightmap.desc.format = Format::R16G16B16A16_FLOAT;
 					}
 					else if (lightmap_size == object.lightmapWidth * object.lightmapHeight * sizeof(PackedVector::XMFLOAT3PK))
 					{
@@ -4917,7 +4916,7 @@ namespace wi::scene
 			inst.uid = entity;
 			inst.layerMask = hair.layerMask;
 			inst.emissive = wi::math::pack_half3(XMFLOAT3(1, 1, 1));
-			inst.color = wi::math::CompressColor(XMFLOAT4(1, 1, 1, 1));
+			inst.color = wi::math::pack_half4(XMFLOAT4(1, 1, 1, 1));
 			inst.center = hair.aabb.getCenter();
 			inst.radius = hair.aabb.getRadius();
 			inst.geometryOffset = (uint)geometryAllocation;
@@ -5034,7 +5033,7 @@ namespace wi::scene
 			inst.uid = entity;
 			inst.layerMask = emitter.layerMask;
 			inst.emissive = wi::math::pack_half3(XMFLOAT3(1, 1, 1));
-			inst.color = wi::math::CompressColor(XMFLOAT4(1, 1, 1, 1));
+			inst.color = wi::math::pack_half4(XMFLOAT4(1, 1, 1, 1));
 			inst.geometryOffset = (uint)geometryAllocation;
 			inst.geometryCount = 1;
 			inst.baseGeometryOffset = inst.geometryOffset;
@@ -5211,7 +5210,7 @@ namespace wi::scene
 			inst.uid = 0;
 			inst.layerMask = ~0u;
 			inst.emissive = wi::math::pack_half3(XMFLOAT3(1, 1, 1));
-			inst.color = wi::math::CompressColor(XMFLOAT4(1, 1, 1, 1));
+			inst.color = wi::math::pack_half4(XMFLOAT4(1, 1, 1, 1));
 			inst.geometryOffset = (uint)rainGeometryOffset;
 			inst.geometryCount = 1;
 			inst.baseGeometryOffset = inst.geometryOffset;

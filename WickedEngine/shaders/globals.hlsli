@@ -17,6 +17,15 @@
 #endif // __XBOX_SCARLETT
 #endif
 
+// Descriptor safety feature:
+//	We init null descriptors for bindless index = 0 for access safety
+//	Because shader compiler sometimes incorrectly loads descriptor outside of safety branch
+//	Note: descriptor index 0 always contains a preinitialized null descriptor
+inline uint descriptor_index(in int x)
+{
+	return max(0, x);
+}
+
 #include "ColorSpaceUtility.hlsli"
 #include "PixelPacking_R11G11B10.hlsli"
 #include "PixelPacking_RGBE.hlsli"
@@ -83,6 +92,10 @@ inline uint pack_half2(in half2 value)
 	retVal = f32tof16(value.x) | (f32tof16(value.y) << 16u);
 	return retVal;
 }
+inline uint pack_half2(in half a, in half b)
+{
+	return pack_half2(half2(a, b));
+}
 inline half2 unpack_half2(in uint value)
 {
 	half2 retVal;
@@ -96,6 +109,10 @@ inline uint2 pack_half3(in half3 value)
 	retVal.x = f32tof16(value.x) | (f32tof16(value.y) << 16u);
 	retVal.y = f32tof16(value.z);
 	return retVal;
+}
+inline uint2 pack_half3(in half a, in half b, in half c)
+{
+	return pack_half3(half3(a, b, c));
 }
 inline half3 unpack_half3(in uint2 value)
 {
@@ -111,6 +128,10 @@ inline uint2 pack_half4(in float4 value)
 	retVal.x = f32tof16(value.x) | (f32tof16(value.y) << 16u);
 	retVal.y = f32tof16(value.z) | (f32tof16(value.w) << 16u);
 	return retVal;
+}
+inline uint2 pack_half4(in half a, in half b, in half c, in half d)
+{
+	return pack_half4(half4(a, b, c, d));
 }
 inline half4 unpack_half4(in uint2 value)
 {
@@ -138,6 +159,16 @@ template<typename T>
 T inverse_lerp(T value1, T value2, T pos)
 {
 	return all(value2 == value1) ? 0 : ((pos - value1) / (value2 - value1));
+}
+
+// Source: https://www.shadertoy.com/view/3s33zj
+float3x3 adjoint(in float4x4 m)
+{
+	return float3x3(
+		cross(m[1].xyz, m[2].xyz), 
+		cross(m[2].xyz, m[0].xyz), 
+		cross(m[0].xyz, m[1].xyz)
+	);
 }
 
 // The root signature will affect shader compilation for DX12.
@@ -447,19 +478,19 @@ inline ShaderWeather GetWeather()
 }
 inline ShaderMeshInstance load_instance(uint instanceIndex)
 {
-	return bindless_structured_meshinstance[GetScene().instancebuffer][instanceIndex];
+	return bindless_structured_meshinstance[descriptor_index(GetScene().instancebuffer)][instanceIndex];
 }
 inline ShaderGeometry load_geometry(uint geometryIndex)
 {
-	return bindless_structured_geometry[GetScene().geometrybuffer][geometryIndex];
+	return bindless_structured_geometry[descriptor_index(GetScene().geometrybuffer)][geometryIndex];
 }
 inline ShaderMeshlet load_meshlet(uint meshletIndex)
 {
-	return bindless_structured_meshlet[GetScene().meshletbuffer][meshletIndex];
+	return bindless_structured_meshlet[descriptor_index(GetScene().meshletbuffer)][meshletIndex];
 }
 inline ShaderMaterial load_material(uint materialIndex)
 {
-	return bindless_structured_material[GetScene().materialbuffer][materialIndex];
+	return bindless_structured_material[descriptor_index(GetScene().materialbuffer)][materialIndex];
 }
 uint load_entitytile(uint tileIndex)
 {
@@ -498,7 +529,7 @@ inline void write_mipmap_feedback(uint materialIndex, float4 uvsets_dx, float4 u
 		const uint wave_mask = WaveActiveBitOr(mask);
 		if(WaveIsFirstLane())
 		{
-			InterlockedOr(bindless_rwbuffers_uint[GetScene().texturestreamingbuffer][materialIndex], wave_mask);
+			InterlockedOr(bindless_rwbuffers_uint[descriptor_index(GetScene().texturestreamingbuffer)][materialIndex], wave_mask);
 		}
 	}
 }
@@ -508,7 +539,7 @@ inline void write_mipmap_feedback(uint materialIndex, uint resolution0, uint res
 	if(WaveIsFirstLane() && GetScene().texturestreamingbuffer >= 0)
 	{
 		const uint mask = resolution0 | (resolution1 << 16u);
-		InterlockedOr(bindless_rwbuffers_uint[GetScene().texturestreamingbuffer][materialIndex], mask);
+		InterlockedOr(bindless_rwbuffers_uint[descriptor_index(GetScene().texturestreamingbuffer)][materialIndex], mask);
 	}
 }
 
@@ -610,18 +641,19 @@ struct PrimitiveID
 	{
 		ShaderMeshInstance inst = load_instance(instanceIndex);
 		ShaderGeometry geometry = load_geometry(inst.geometryOffset + subsetIndex);
+		[branch]
 		if (maybe_clustered && geometry.vb_clu >= 0)
 		{
 			const uint clusterID = primitiveIndex >> 7u;
 			const uint triangleID = primitiveIndex & 0x7F;
-			ShaderCluster cluster = bindless_structured_cluster[NonUniformResourceIndex(geometry.vb_clu)][clusterID];
+			ShaderCluster cluster = bindless_structured_cluster[NonUniformResourceIndex(descriptor_index(geometry.vb_clu))][clusterID];
 			uint i0 = cluster.vertices[cluster.triangles[triangleID].i0()];
 			uint i1 = cluster.vertices[cluster.triangles[triangleID].i1()];
 			uint i2 = cluster.vertices[cluster.triangles[triangleID].i2()];
 			return uint3(i0, i1, i2);
 		}
 		const uint startIndex = primitiveIndex * 3 + geometry.indexOffset;
-		Buffer<uint> indexBuffer = bindless_buffers_uint[NonUniformResourceIndex(geometry.ib)];
+		Buffer<uint> indexBuffer = bindless_buffers_uint[NonUniformResourceIndex(descriptor_index(geometry.ib))];
 		uint i0 = indexBuffer[startIndex + 0];
 		uint i1 = indexBuffer[startIndex + 1];
 		uint i2 = indexBuffer[startIndex + 2];
@@ -632,26 +664,26 @@ struct PrimitiveID
 	uint i2() { return tri().z; }
 };
 
-#define texture_random64x64 bindless_textures[GetFrame().texture_random64x64_index]
-#define texture_bluenoise bindless_textures[GetFrame().texture_bluenoise_index]
-#define texture_sheenlut bindless_textures_half4[GetFrame().texture_sheenlut_index]
-#define texture_skyviewlut bindless_textures_half4[GetFrame().texture_skyviewlut_index]
-#define texture_transmittancelut bindless_textures_half4[GetFrame().texture_transmittancelut_index]
-#define texture_multiscatteringlut bindless_textures_half4[GetFrame().texture_multiscatteringlut_index]
-#define texture_skyluminancelut bindless_textures_half4[GetFrame().texture_skyluminancelut_index]
-#define texture_cameravolumelut bindless_textures3D_half4[GetFrame().texture_cameravolumelut_index]
-#define texture_wind bindless_textures3D[GetFrame().texture_wind_index]
-#define texture_wind_prev bindless_textures3D[GetFrame().texture_wind_prev_index]
-#define texture_caustics bindless_textures_half4[GetFrame().texture_caustics_index]
-#define scene_acceleration_structure bindless_accelerationstructures[GetScene().TLAS]
+#define texture_random64x64 bindless_textures[descriptor_index(GetFrame().texture_random64x64_index)]
+#define texture_bluenoise bindless_textures[descriptor_index(GetFrame().texture_bluenoise_index)]
+#define texture_sheenlut bindless_textures_half4[descriptor_index(GetFrame().texture_sheenlut_index)]
+#define texture_skyviewlut bindless_textures_half4[descriptor_index(GetFrame().texture_skyviewlut_index)]
+#define texture_transmittancelut bindless_textures_half4[descriptor_index(GetFrame().texture_transmittancelut_index)]
+#define texture_multiscatteringlut bindless_textures_half4[descriptor_index(GetFrame().texture_multiscatteringlut_index)]
+#define texture_skyluminancelut bindless_textures_half4[descriptor_index(GetFrame().texture_skyluminancelut_index)]
+#define texture_cameravolumelut bindless_textures3D_half4[descriptor_index(GetFrame().texture_cameravolumelut_index)]
+#define texture_wind bindless_textures3D[descriptor_index(GetFrame().texture_wind_index)]
+#define texture_wind_prev bindless_textures3D[descriptor_index(GetFrame().texture_wind_prev_index)]
+#define texture_caustics bindless_textures_half4[descriptor_index(GetFrame().texture_caustics_index)]
+#define scene_acceleration_structure bindless_accelerationstructures[descriptor_index(GetScene().TLAS)]
 
-#define texture_depth bindless_textures_float[GetCamera().texture_depth_index]
-#define texture_depth_history bindless_textures_float[GetCamera().texture_depth_index_prev]
-#define texture_lineardepth bindless_textures_float[GetCamera().texture_lineardepth_index]
-#define texture_primitiveID bindless_textures_uint[GetCamera().texture_primitiveID_index]
-#define texture_velocity bindless_textures_float2[GetCamera().texture_velocity_index]
-#define texture_normal bindless_textures_float2[GetCamera().texture_normal_index]
-#define texture_roughness bindless_textures_float[GetCamera().texture_roughness_index]
+#define texture_depth bindless_textures_float[descriptor_index(GetCamera().texture_depth_index)]
+#define texture_depth_history bindless_textures_float[descriptor_index(GetCamera().texture_depth_index_prev)]
+#define texture_lineardepth bindless_textures_float[descriptor_index(GetCamera().texture_lineardepth_index)]
+#define texture_primitiveID bindless_textures_uint[descriptor_index(GetCamera().texture_primitiveID_index)]
+#define texture_velocity bindless_textures_float2[descriptor_index(GetCamera().texture_velocity_index)]
+#define texture_normal bindless_textures_float2[descriptor_index(GetCamera().texture_normal_index)]
+#define texture_roughness bindless_textures_float[descriptor_index(GetCamera().texture_roughness_index)]
 
 // Note: defines can be better for choosing between half/float by compiler than "static const float"
 #define PI 3.14159265358979323846
@@ -1159,23 +1191,35 @@ inline float3x3 compute_tangent_frame(float3 N, float3 P, float2 UV)
 }
 
 // Computes linear depth from post-projection depth
-inline float compute_lineardepth(in float z, in float near, in float far)
+inline float compute_lineardepth(in float z, in float near, in float far, in bool ortho = false)
 {
+	if (ortho)
+		return near + (1 - z) * (far - near); // ortho
+
+	// Perspective:
 	float z_n = 2 * z - 1;
 	float lin = 2 * far * near / (near + far - z_n * (near - far));
 	return lin;
 }
 inline float compute_lineardepth(in float z)
 {
-	return compute_lineardepth(z, GetCamera().z_near, GetCamera().z_far);
+	return compute_lineardepth(z, GetCamera().z_near, GetCamera().z_far, GetCamera().IsOrtho());
 }
 
 // Computes post-projection depth from linear depth
-inline float compute_inverse_lineardepth(in float lin, in float near, in float far)
+inline float compute_inverse_lineardepth(in float lin, in float near, in float far, in bool ortho = false)
 {
+	if (ortho)
+		return 1 - (lin - near) / (far - near);
+	
+	// Perspective:
 	float z_n = ((lin - 2 * far) * near + far * lin) / (lin * near - far * lin);
 	float z = (z_n + 1) / 2;
 	return z;
+}
+inline float compute_inverse_lineardepth(in float lin)
+{
+	return compute_inverse_lineardepth(lin, GetCamera().z_near, GetCamera().z_far, GetCamera().IsOrtho());
 }
 
 inline float3x3 get_tangentspace(in float3 normal)
@@ -2003,6 +2047,25 @@ half3x3 saturationMatrix(half saturation)
 	blue += half3(0, 0, saturation);
 
 	return half3x3(red, green, blue);
+}
+
+
+static const float3 random_colors[] = {
+	float3(0,0,1),
+	float3(0,1,1),
+	float3(0,1,0),
+	float3(1,1,0),
+	float3(1,0,0),
+	float3(1,0,1),
+	float3(0.5,1,1),
+	float3(0.5,1,0.5),
+	float3(1,1,0.5),
+	float3(1,0.5,0.5),
+	float3(1,0.5,1),
+};
+float3 random_color(uint index)
+{
+	return random_colors[index % arraysize(random_colors)];
 }
 
 #endif // WI_SHADER_GLOBALS_HF

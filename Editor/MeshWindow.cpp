@@ -25,7 +25,7 @@ MeshComponent* get_mesh(Scene& scene, PickResult x)
 void MeshWindow::Create(EditorComponent* _editor)
 {
 	editor = _editor;
-	wi::gui::Window::Create(ICON_MESH " Mesh", wi::gui::Window::WindowControls::COLLAPSE | wi::gui::Window::WindowControls::CLOSE);
+	wi::gui::Window::Create(ICON_MESH " Mesh", wi::gui::Window::WindowControls::COLLAPSE | wi::gui::Window::WindowControls::CLOSE | wi::gui::Window::WindowControls::FIT_ALL_WIDGETS_VERTICAL);
 	SetSize(XMFLOAT2(580, 880));
 
 	closeButton.SetTooltip("Delete MeshComponent");
@@ -249,12 +249,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	flipCullingButton.SetPos(XMFLOAT2(mod_x, y += step));
 	flipCullingButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->FlipCulling();
+			visited_meshes.insert(mesh);
 		}
 		SetEntity(entity, subset);
 	});
@@ -266,12 +268,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	flipNormalsButton.SetPos(XMFLOAT2(mod_x, y += step));
 	flipNormalsButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->FlipNormals();
+			visited_meshes.insert(mesh);
 		}
 		SetEntity(entity, subset);
 	});
@@ -283,12 +287,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	computeNormalsSmoothButton.SetPos(XMFLOAT2(mod_x, y += step));
 	computeNormalsSmoothButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->ComputeNormals(MeshComponent::COMPUTE_NORMALS_SMOOTH);
+			visited_meshes.insert(mesh);
 		}
 		SetEntity(entity, subset);
 	});
@@ -300,12 +306,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	computeNormalsHardButton.SetPos(XMFLOAT2(mod_x, y += step));
 	computeNormalsHardButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->ComputeNormals(MeshComponent::COMPUTE_NORMALS_HARD);
+			visited_meshes.insert(mesh);
 		}
 		SetEntity(entity, subset);
 	});
@@ -317,12 +325,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	recenterButton.SetPos(XMFLOAT2(mod_x, y += step));
 	recenterButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->Recenter();
+			visited_meshes.insert(mesh);
 		}
 	});
 	AddWidget(&recenterButton);
@@ -333,12 +343,14 @@ void MeshWindow::Create(EditorComponent* _editor)
 	recenterToBottomButton.SetPos(XMFLOAT2(mod_x, y += step));
 	recenterToBottomButton.OnClick([&](wi::gui::EventArgs args) {
 		wi::scene::Scene& scene = editor->GetCurrentScene();
+		wi::unordered_set<MeshComponent*> visited_meshes; // fix double visit (straight mesh + object->mesh)
 		for (auto& x : editor->translator.selected)
 		{
 			MeshComponent* mesh = get_mesh(scene, x);
-			if (mesh == nullptr)
+			if (mesh == nullptr || visited_meshes.count(mesh) > 0)
 				continue;
 			mesh->RecenterToBottom();
+			visited_meshes.insert(mesh);
 		}
 	});
 	AddWidget(&recenterToBottomButton);
@@ -352,6 +364,7 @@ void MeshWindow::Create(EditorComponent* _editor)
 		ObjectComponent merged_object;
 		MeshComponent merged_mesh;
 		bool valid_normals = false;
+		bool valid_tangents = false;
 		bool valid_uvset_0 = false;
 		bool valid_uvset_1 = false;
 		bool valid_atlas = false;
@@ -439,6 +452,18 @@ void MeshWindow::Create(EditorComponent* _editor)
 					valid_normals = true;
 					merged_mesh.vertex_normals.push_back(mesh->vertex_normals[i]);
 					XMStoreFloat3(&merged_mesh.vertex_normals.back(), XMVector3TransformNormal(XMLoadFloat3(&merged_mesh.vertex_normals.back()), W));
+				}
+
+				if (mesh->vertex_tangents.empty())
+				{
+					merged_mesh.vertex_tangents.emplace_back();
+				}
+				else
+				{
+					valid_tangents = true;
+					merged_mesh.vertex_tangents.push_back(mesh->vertex_tangents[i]);
+					XMFLOAT3* tan = (XMFLOAT3*)&merged_mesh.vertex_tangents.back();
+					XMStoreFloat3(tan, XMVector3TransformNormal(XMLoadFloat3(tan), W));
 				}
 
 				if (mesh->vertex_uvset_0.empty())
@@ -564,6 +589,8 @@ void MeshWindow::Create(EditorComponent* _editor)
 		{
 			if (!valid_normals)
 				merged_mesh.vertex_normals.clear();
+			if (!valid_tangents)
+				merged_mesh.vertex_tangents.clear();
 			if (!valid_uvset_0)
 				merged_mesh.vertex_uvset_0.clear();
 			if (!valid_uvset_1)

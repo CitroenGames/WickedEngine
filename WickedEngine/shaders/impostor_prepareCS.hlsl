@@ -11,7 +11,7 @@ static const float3 BILLBOARD[] =
 };
 
 RWBuffer<uint> output_indices : register(u0);
-RWByteAddressBuffer output_vertices_pos : register(u1);
+RWBuffer<float4> output_vertices_pos : register(u1);
 RWBuffer<float4> output_vertices_nor : register(u2);
 RWByteAddressBuffer output_impostor_data : register(u3);
 RWStructuredBuffer<IndirectDrawArgsIndexedInstanced> output_indirect : register(u4);
@@ -94,7 +94,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 		uint2 data = 0;
 		data.x |= slice & 0xFFFFFF;
 		data.x |= (uint(dither * 255) & 0xFF) << 24u;
-		data.y = instance.color;
+		data.y = pack_rgba(instance.GetColor());
 		output_impostor_data.Store2(impostorOffset * sizeof(uint2), data);
 
 		// Write out vertices:
@@ -104,11 +104,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
 			pos = mul(pos, float3x3(right, up, face));
 			pos *= instance.radius;
 			pos += instance.center;
-#ifdef __PSSL__
-			output_vertices_pos.TypedStore<float3>((vertexOffset + vertexID) * sizeof(float3), pos);
-#else
-			output_vertices_pos.Store<float3>((vertexOffset + vertexID) * sizeof(float3), pos);
-#endif // __PSSL__
+			output_vertices_pos[vertexOffset + vertexID] = float4(pos, 0);
 			output_vertices_nor[vertexOffset + vertexID] = float4(face, 0);
 		}
 	}

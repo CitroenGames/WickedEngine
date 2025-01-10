@@ -122,9 +122,9 @@ static const uint2 SVT_PACKED_MIP_OFFSETS[SVT_PACKED_MIP_COUNT] = {
 
 #ifndef __cplusplus
 #ifdef TEXTURE_SLOT_NONUNIFORM
-#define UniformTextureSlot(x) NonUniformResourceIndex(x)
+#define UniformTextureSlot(x) NonUniformResourceIndex(descriptor_index(x))
 #else
-#define UniformTextureSlot(x) (x)
+#define UniformTextureSlot(x) descriptor_index(x)
 #endif // TEXTURE_SLOT_NONUNIFORM
 
 inline float get_lod(in uint2 dim, in float2 uv_dx, in float2 uv_dy, uint anisotropy = 0)
@@ -640,6 +640,12 @@ struct alignas(16) ShaderTransform
 			0, 0, 0, 1
 		);
 	}
+#ifndef __cplusplus
+	float3x3 GetMatrixAdjoint()
+	{
+		return adjoint(GetMatrix());
+	}
+#endif // __cplusplus
 };
 
 struct alignas(16) ShaderMeshInstance
@@ -647,19 +653,15 @@ struct alignas(16) ShaderMeshInstance
 	uint uid;
 	uint flags;	// high 8 bits: user stencilRef
 	uint layerMask;
-	uint geometryOffset;	// offset of all geometries for currently active LOD
-
-	uint2 emissive; // packed half4
-	uint color;
-	uint geometryCount;		// number of all geometries in currently active LOD
-
 	uint meshletOffset; // offset in the global meshlet buffer for first subset (for LOD0)
-	float fadeDistance;
+
+	uint geometryOffset;	// offset of all geometries for currently active LOD
+	uint geometryCount;		// number of all geometries in currently active LOD
 	uint baseGeometryOffset;	// offset of all geometries of the instance (if no LODs, then it is equal to geometryOffset)
 	uint baseGeometryCount;		// number of all geometries of the instance (if no LODs, then it is equal to geometryCount)
 
-	float3 center;
-	float radius;
+	uint2 color; // packed half4
+	uint2 emissive; // packed half4
 
 	int vb_ao;
 	int vb_wetmap;
@@ -667,18 +669,25 @@ struct alignas(16) ShaderMeshInstance
 	uint alphaTest_size; // packed half2
 
 	uint2 rimHighlight; // packed half4
-	uint2 quaternion; // packed half4
+	float fadeDistance;
+	float padding;
 
-	ShaderTransform transform;
-	ShaderTransform transformPrev;
-	ShaderTransform transformRaw; // without quantization remapping applied
+	float3 center;
+	float radius;
+
+	ShaderTransform transform; // Note: this could contain quantization remapping from UNORM -> FLOAT depending on vertex position format
+	ShaderTransform transformPrev; // Note: this could contain quantization remapping from UNORM -> FLOAT depending on vertex position format
+	ShaderTransform transformRaw; // Note: this is the world matrix without any quantization remapping
 
 	void init()
 	{
+#ifdef __cplusplus
+		using namespace wi::math;
+#endif // __cplusplus
 		uid = 0;
 		flags = 0;
 		layerMask = 0;
-		color = ~0u;
+		color = pack_half4(1, 1, 1, 1);
 		emissive = uint2(0, 0);
 		lightmap = -1;
 		geometryOffset = 0;
@@ -692,11 +701,6 @@ struct alignas(16) ShaderMeshInstance
 		vb_ao = -1;
 		vb_wetmap = -1;
 		alphaTest_size = 0;
-#ifdef __cplusplus
-		quaternion = wi::math::pack_half4(float4(0, 0, 0, 1));
-#else
-		quaternion = pack_half4(float4(0, 0, 0, 1));
-#endif // __cplusplus
 		rimHighlight = uint2(0, 0);
 		transform.init();
 		transformPrev.init();
@@ -713,12 +717,11 @@ struct alignas(16) ShaderMeshInstance
 	}
 
 #ifndef __cplusplus
-	inline half4 GetColor() { return (half4)unpack_rgba(color); }
+	inline half4 GetColor() { return unpack_half4(color); }
 	inline half3 GetEmissive() { return unpack_half3(emissive); }
 	inline half GetAlphaTest() { return unpack_half2(alphaTest_size).x; }
 	inline half GetSize() { return unpack_half2(alphaTest_size).y; }
 	inline half4 GetRimHighlight() { return unpack_half4(rimHighlight); }
-	inline half4 GetQuaternion() { return unpack_half4(quaternion); }
 #endif // __cplusplus
 };
 struct ShaderMeshInstancePointer
