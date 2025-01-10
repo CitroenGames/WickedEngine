@@ -27,7 +27,7 @@ elseif(WIN32)
 endif()
 
 # Configure CMake global variables
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -47,7 +47,6 @@ elseif(UNIX)
     set(DXC_TARGET "dxc")
 endif()
 
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdeclspec -fms-extensions")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} $<$<NOT:$<WICKED_DYNAMIC_LIBRARY>>:--for-linker=-no-pie>" )
@@ -59,27 +58,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 else()
 endif()
 
-
 add_subdirectory(WickedEngine)
 add_subdirectory(Content)
+add_subdirectory(Samples)
 
 if (WICKED_EDITOR)
     add_subdirectory(Editor)
-endif()
-
-if (WICKED_TESTS)
-    add_subdirectory(Samples/Tests)
-endif()
-
-if (WICKED_IMGUI_EXAMPLE)
-    add_subdirectory(Samples/Example_ImGui)
-    add_subdirectory(Samples/Example_ImGui_Docking)
-endif()
-
-if (WICKED_LINUX_TEMPLATE)
-    add_subdirectory(Samples/Template_Linux)
-endif()
-
-if (WICKED_WINDOWS_TEMPLATE)
-    add_subdirectory(Samples/Template_Windows)
 endif()

@@ -87,6 +87,8 @@ namespace wi
 		// This is where the application will render to the screen (backbuffer). It must render to the provided command list.
 		virtual void Compose(wi::graphics::CommandList cmd);
 
+		virtual void Shutdown();
+
 		// You need to call this before calling Run() or Initialize() if you want to render
 		void SetWindow(wi::platform::window_type);
 

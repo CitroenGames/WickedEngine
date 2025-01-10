@@ -1,7 +1,6 @@
 #include "wiHelper.h"
 #include "wiPlatform.h"
 #include "wiBacklog.h"
-#include "wiEventHandler.h"
 #include "wiMath.h"
 
 #include "Utility/lodepng.h"
@@ -10,16 +9,11 @@
 #include "Utility/basis_universal/encoder/basisu_comp.h"
 #include "Utility/basis_universal/encoder/basisu_gpu_texture.h"
 
-#include <thread>
-#include <locale>
-#include <chrono>
-#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <codecvt> // string conversion
 #include <filesystem>
 #include <vector>
-#include <iostream>
 #include <cstdlib>
 
 #ifdef PLATFORM_LINUX
@@ -190,6 +184,18 @@ namespace wi::helper
 		}
 
 		return stagingTex.mapped_data != nullptr;
+	}
+
+	inline std::string to_string(const std::u8string& u8str)
+	{
+		// Simple conversion since underlying data is UTF-8 encoded and char8_t is unsigned type
+		std::string result;
+		result.reserve(u8str.size());
+		for (char8_t ch : u8str)
+		{
+			result.push_back(static_cast<char>(ch));
+		}
+		return result;
 	}
 
 	bool saveTextureToMemoryFile(const wi::graphics::Texture& texture, const std::string& fileExtension, wi::vector<uint8_t>& filedata)
@@ -1134,7 +1140,7 @@ namespace wi::helper
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = nullptr;
 			ofn.lpstrFile = szFile;
-			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+			// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 			// use the contents of szFile to initialize itself.
 			ofn.lpstrFile[0] = '\0';
 			ofn.nMaxFile = sizeof(szFile);
@@ -1252,9 +1258,11 @@ namespace wi::helper
 #endif // PLATFORM_LINUX
 	}
 
+
+
 	void GetFileNamesInDirectory(const std::string& directory, std::function<void(std::string fileName)> onSuccess, const std::string& filter_extension)
 	{
-		std::filesystem::path directory_path = ToNativeString(directory);
+		std::filesystem::path directory_path(directory);
 		if (!std::filesystem::exists(directory_path))
 			return;
 
@@ -1272,7 +1280,7 @@ namespace wi::helper
 
 	void GetFolderNamesInDirectory(const std::string& directory, std::function<void(std::string folderName)> onSuccess)
 	{
-		std::filesystem::path directory_path = ToNativeString(directory);
+		std::filesystem::path directory_path(directory);
 		if (!std::filesystem::exists(directory_path))
 			return;
 
@@ -1384,7 +1392,7 @@ namespace wi::helper
 		return num;
 #endif // _WIN32
 	}
-	
+
 	void DebugOut(const std::string& str, DebugLevel level)
 	{
 #ifdef _WIN32
@@ -1409,7 +1417,7 @@ namespace wi::helper
 	}
 #endif // _WIN32
 	}
-	
+
 	void Sleep(float milliseconds)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)milliseconds));

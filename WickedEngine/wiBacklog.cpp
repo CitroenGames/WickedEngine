@@ -10,6 +10,7 @@
 #include "wiPlatform.h"
 #include "wiHelper.h"
 #include "wiGUI.h"
+#include "log.h"
 
 #include <mutex>
 #include <deque>
@@ -90,15 +91,17 @@ namespace wi::backlog
 		enabled = !enabled;
 		was_ever_enabled = true;
 	}
+
 	void Scroll(float dir)
 	{
 		scroll += dir;
 	}
+
 	void Update(const wi::Canvas& canvas, float dt)
 	{
 		if (!locked)
 		{
-			if (wi::input::Press(wi::input::KEYBOARD_BUTTON_HOME) && !GUI.IsTyping())
+			if (wi::input::Press(wi::input::KEYBOARD_BUTTON_INSERT) && !GUI.IsTyping())
 			{
 				Toggle();
 			}
@@ -210,6 +213,7 @@ namespace wi::backlog
 		toggleButton.SetPos(XMFLOAT2(canvas.GetLogicalWidth() - toggleButton.GetSize().x - 20, 20 + pos));
 		toggleButton.Update(canvas, dt);
 	}
+
 	void Draw(
 		const wi::Canvas& canvas,
 		CommandList cmd,
@@ -376,6 +380,7 @@ namespace wi::backlog
 		LogEntry entry;
 		entry.text = str;
 		entry.level = level;
+    
 		// This is explicitly scoped for scoped_lock!
 		{
 			std::scoped_lock lock(entriesLock);

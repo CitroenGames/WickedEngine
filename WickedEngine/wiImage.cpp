@@ -1,7 +1,6 @@
 #include "wiImage.h"
 #include "wiResourceManager.h"
 #include "wiRenderer.h"
-#include "wiHelper.h"
 #include "shaders/ShaderInterop_Image.h"
 #include "wiBacklog.h"
 #include "wiEventHandler.h"

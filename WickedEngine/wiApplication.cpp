@@ -29,8 +29,9 @@
 #include <new>
 #include <cstdlib>
 #include <atomic>
+#include "log.h"
 
-//#define WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
+#define WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
 
 #ifdef WICKED_ENGINE_HEAP_ALLOCATION_COUNTER
 static std::atomic<uint32_t> number_of_heap_allocations{ 0 };
@@ -49,6 +50,8 @@ namespace wi
 			return;
 		}
 		initialized = true;
+
+		INIT_LOG();
 
 		wi::initializer::InitializeComponentsAsync();
 
@@ -586,6 +589,11 @@ namespace wi
 		wi::profiler::EndRange(range); // Compose
 	}
 
+	void Application::Shutdown()
+	{
+		SHUTDOWN_LOG();
+	}
+
 	void Application::SetWindow(wi::platform::window_type window)
 	{
 		this->window = window;
@@ -636,7 +644,7 @@ namespace wi
 
 			if (!use_dx12 && !use_vulkan)
 			{
-#if defined(WICKEDENGINE_BUILD_DX12)
+#ifdef WICKEDENGINE_BUILD_DX12
 				use_dx12 = true;
 #elif defined(WICKEDENGINE_BUILD_VULKAN)
 				use_vulkan = true;

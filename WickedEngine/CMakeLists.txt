@@ -2,51 +2,80 @@ cmake_minimum_required(VERSION 3.12)
 
 set(MIN_OpenImageDenoise_VERSION "2.0")
 
+option(USE_SDL2 "Use SDL2" OFF)
+
+if(WIN32)
+	option(BUILD_VULKAN "Build Vulkan support" ON)
+endif()
+
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 set(INSTALL_LOCAL_CONFIGDIR "${CMAKE_BINARY_DIR}/cmake")
 set(INSTALL_CONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/WickedEngine")
 
 if (WICKED_DYNAMIC_LIBRARY)
-	set(WICKED_LIBRARY_TYPE SHARED)
-	message(STATUS "Building WickedEngine as a shared library")
+    set(WICKED_LIBRARY_TYPE SHARED)
+    message(STATUS "Building WickedEngine as a shared library")
 else()
-	set(WICKED_LIBRARY_TYPE STATIC)
-	message(STATUS "Building WickedEngine as a static library")
+    set(WICKED_LIBRARY_TYPE STATIC)
+    message(STATUS "Building WickedEngine as a static library")
 endif()
 
+include("Cmake/Utils.cmake")
+add_subdirectory(3rdparty)
+
 if (WIN32)
-	# TODO: Choose whether to use SDL2 on windows as well
-	set(TARGET_NAME WickedEngine_Windows)
-else ()
-	set(TARGET_NAME WickedEngine_Linux)
-	find_package(SDL2 REQUIRED)
-	find_package(OpenImageDenoise "${MIN_OpenImageDenoise_VERSION}" QUIET)
-	find_package(Threads REQUIRED)
-	if(NOT ${OpenImageDenoise_FOUND})
-		message("OpenImageDenoise>=${MIN_OpenImageDenoise_VERSION} not found, it will be disabled.")
-	else()
-		message("OpenImageDenoise ${OpenImageDenoise_VERSION} Found.")
-	endif()
+    set(TARGET_NAME WickedEngine_Windows)
+    if(USE_SDL2)
+        find_package(SDL2 REQUIRED)
+        if(NOT TARGET SDL2::SDL2)
+            # Create SDL2 target for older SDL2 CMake versions
+            find_library(SDL2_LIBRARY_FILE_LOCATION SDL2 REQUIRED)
 
-	if(NOT TARGET SDL2::SDL2)
-		# using old SDL2 cmake, lets create a SDL2 target ourselves
-		find_library(SDL2_LIBRARY_FILE_LOCATION SDL2 REQUIRED)
+            add_library(SDL2::SDL2 SHARED IMPORTED)
+            set_target_properties(SDL2::SDL2 PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES ${SDL2_INCLUDE_DIRS}
+                INTERFACE_LINK_LIBRARIES ${SDL2_LIBRARIES}
+                IMPORTED_LOCATION ${SDL2_LIBRARY_FILE_LOCATION}
+            )
 
-		add_library(SDL2::SDL2 SHARED IMPORTED)
-		set_target_properties(SDL2::SDL2 PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES ${SDL2_INCLUDE_DIRS}
-			INTERFACE_LINK_LIBRARIES ${SDL2_LIBRARIES}
-			IMPORTED_LOCATION ${SDL2_LIBRARY_FILE_LOCATION}
-		)
+            unset(SDL2_LIBRARY_FILE_LOCATION)
+        endif()
+        
+        # Check SDL version for controller LED support
+        if((${SDL_VERSION_MAJOR} GREATER_EQUAL 2) AND (${SDL2_VERSION_MINOR} GREATER_EQUAL 0) AND (${SDL2_VERSION_PATCH} GREATER_EQUAL 14))
+            add_compile_definitions(SDL2_FEATURE_CONTROLLER_LED=1)
+        endif()
+    endif()
+else()
+    set(TARGET_NAME WickedEngine_Linux)
+    find_package(SDL2 REQUIRED)
+    find_package(OpenImageDenoise "${MIN_OpenImageDenoise_VERSION}" QUIET)
+    find_package(Threads REQUIRED)
+    if(NOT ${OpenImageDenoise_FOUND})
+        message("OpenImageDenoise>=${MIN_OpenImageDenoise_VERSION} not found, it will be disabled.")
+    else()
+        message("OpenImageDenoise ${OpenImageDenoise_VERSION} Found.")
+    endif()
 
-		unset(SDL2_LIBRARY_FILE_LOCATION)
-	endif()
+    if(NOT TARGET SDL2::SDL2)
+        # using old SDL2 cmake, lets create a SDL2 target ourselves
+        find_library(SDL2_LIBRARY_FILE_LOCATION SDL2 REQUIRED)
 
-	# minimum sdl version is 2.0.14 for controller LED support
-	if((${SDL_VERSION_MAJOR} GREATER_EQUAL 2) AND (${SDL2_VERSION_MINOR} GREATER_EQUAL 0) AND (${SDL2_VERSION_PATCH} GREATER_EQUAL 14))
-		add_compile_definitions(SDL2_FEATURE_CONTROLLER_LED=1)
-	endif()
+        add_library(SDL2::SDL2 SHARED IMPORTED)
+        set_target_properties(SDL2::SDL2 PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${SDL2_INCLUDE_DIRS}
+            INTERFACE_LINK_LIBRARIES ${SDL2_LIBRARIES}
+            IMPORTED_LOCATION ${SDL2_LIBRARY_FILE_LOCATION}
+        )
+
+        unset(SDL2_LIBRARY_FILE_LOCATION)
+    endif()
+
+    # minimum sdl version is 2.0.14 for controller LED support
+    if((${SDL_VERSION_MAJOR} GREATER_EQUAL 2) AND (${SDL2_VERSION_MINOR} GREATER_EQUAL 0) AND (${SDL2_VERSION_PATCH} GREATER_EQUAL 14))
+        add_compile_definitions(SDL2_FEATURE_CONTROLLER_LED=1)
+    endif()
 endif()
 
 add_subdirectory(LUA)
@@ -61,17 +90,25 @@ file(GLOB HEADER_FILES CONFIGURE_DEPENDS *.h)
 file(GLOB SOURCE_FILES CONFIGURE_DEPENDS *.cpp)
 list(REMOVE_ITEM SOURCE_FILES offlineshadercompiler.cpp)
 
+group_sources(SOURCE_FILES HEADER_FILES)
+
 add_library(${TARGET_NAME} ${WICKED_LIBRARY_TYPE}
 	${SOURCE_FILES}
 	${HEADER_FILES}
 )
 
+if(BUILD_VULKAN)
+	target_compile_definitions(${TARGET_NAME} PUBLIC WICKED_BUILD_VULKAN)
+endif()
+
 if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /GS /Oi")
 endif()
 
 add_library(WickedEngine ALIAS ${TARGET_NAME})
 set_target_properties(${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
+
+target_compile_features(${TARGET_NAME} PUBLIC cxx_std_23)
 
 target_include_directories(${TARGET_NAME} SYSTEM PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -82,7 +119,12 @@ set(WICKEDENGINE_STATIC_LIBRARIES
 	Jolt
 	LUA
 	Utility
+	spdlog
 )
+
+if(USE_SDL2)
+    set(WICKEDENGINE_STATIC_LIBRARIES ${WICKEDENGINE_STATIC_LIBRARIES} SDL2::SDL2)
+endif()
 
 if (WIN32)
 	target_compile_definitions(${TARGET_NAME} PUBLIC
@@ -148,12 +190,15 @@ add_library(dxcompiler SHARED IMPORTED)
 set_property(TARGET dxcompiler PROPERTY
 		IMPORTED_LOCATION ${WICKED_ROOT_DIR}/WickedEngine/${LIBDXCOMPILER} )
 
-# Copy the shader library next to the executable
+
+#TODO: find a way to make this work in windows
+if(NOT WIN32)
 add_custom_command(
 		TARGET ${TARGET_NAME} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WICKED_ROOT_DIR}/WickedEngine/${LIBDXCOMPILER} ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E create_symlink ${WICKED_ROOT_DIR}/WickedEngine/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
 )
+endif()
 
 
 # OFFLINE SHADER COMPILER

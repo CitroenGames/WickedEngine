@@ -1090,6 +1090,7 @@ namespace vulkan_internal
 	}
 	Shader_Vulkan* to_internal(const Shader* param)
 	{
+		//TODO: THIS DOESNT SEEM WORK ON C++ 20 or above for some reason
 		return static_cast<Shader_Vulkan*>(param->internal_state.get());
 	}
 	PipelineState_Vulkan* to_internal(const PipelineState* param)
