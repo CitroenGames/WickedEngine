@@ -9,8 +9,17 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <SDKDDKVer.h>
+
+// Define Windows version (For CLion)
+#ifndef WINVER
+#define WINVER 0x0A00  // Windows 10
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00  // Windows 10
+#endif
+
 #include <windows.h>
+#include <winuser.h>
 
 #if WINAPI_FAMILY == WINAPI_FAMILY_GAMES
 #define PLATFORM_XBOX
