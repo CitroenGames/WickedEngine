@@ -1,12 +1,13 @@
-#include "WickedEngine.h"
-
 #ifdef _WIN32
 #include <Windows.h>
+#include <resource.h>
 #else
 #include <SDL2/SDL.h>
 #endif
 
-wi::Application application;
+#include "app.h"
+
+Game application;
 
 #ifdef _WIN32
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -66,7 +67,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
-	wcex.hIcon = NULL;
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TEMPLATEWINDOWS));
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
@@ -84,6 +85,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	application.infoDisplay.watermark = true;
 	application.infoDisplay.resolution = true;
 	application.infoDisplay.fpsinfo = true;
+
+	application.Initialize();
+	application.ActivatePath(&application.renderpath);
+
+	wi::scene::LoadModel("TestMap.wiscene");
 
 	MSG msg = { 0 };
 	while (msg.message != WM_QUIT)

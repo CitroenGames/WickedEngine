@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(Template)
+project(HelloTriangle)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "src/*.h" "src/*.hpp")
 

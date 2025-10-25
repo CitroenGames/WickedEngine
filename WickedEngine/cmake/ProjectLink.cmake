@@ -5,6 +5,8 @@ macro(setup_wicked_app PROJECT_NAME)
     if(WIN32)
         set(LIBDXCOMPILER "dxcompiler.dll")
         set(COPY_OR_SYMLINK_DIR_CMD "copy_directory")
+        # Prevent Windows.h from defining min/max macros
+        target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)
     else()
         set(LIBDXCOMPILER "libdxcompiler.so")
         set(COPY_OR_SYMLINK_DIR_CMD "symlink_directory")

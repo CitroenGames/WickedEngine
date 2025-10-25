@@ -1,2 +1,2 @@
-cmake -B build
+cmake -B solutions/win64
 pause

@@ -14,3 +14,6 @@ endif()
 if (WICKED_WINDOWS_TEMPLATE)
     add_subdirectory(Template_Windows)
 endif()
+
+add_subdirectory(HelloTriangle)
+add_subdirectory(SoftbodyPhysics)
