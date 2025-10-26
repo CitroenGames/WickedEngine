@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #endif
 
-#include "app.h"
+#include "sample.h"
 
 SampleApp application;
 
@@ -71,7 +71,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
-	wcex.lpszClassName = L"WickedEngine Template";
+	wcex.lpszClassName = L"WickedEngine HelloTriangle Sample";
 	wcex.hIconSm = NULL;
 	RegisterClassExW(&wcex);
 	HWND hWnd = CreateWindowW(wcex.lpszClassName, wcex.lpszClassName, WS_OVERLAPPEDWINDOW, 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	// SDL window setup for Linux and other platforms:
 	sdl2::sdlsystem_ptr_t system = sdl2::make_sdlsystem(SDL_INIT_EVERYTHING | SDL_INIT_EVENTS);
 	sdl2::window_ptr_t window = sdl2::make_window(
-		"WickedEngine Template",
+		"WickedEngine HelloTriangle Sample",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		1920, 1080,
 		SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);

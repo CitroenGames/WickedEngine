@@ -2,13 +2,25 @@
 
 #include "WickedEngine.h"
 
-class Game : public wi::Application
+class SampleRenderPath : public wi::RenderPath3D
 {
 public:
-	Game();
+	void Load() override;
+	void Update(float dt) override;
+};
 
-	void Initialize() override;
+class SampleApp : public wi::Application
+{
+public:
+    SampleRenderPath render;
+	void Initialize() override
+	{
+		wi::Application::Initialize();
+		render.Load();
 
-	wi::RenderPath3D renderpath;
-private:
+		ActivatePath(&render);
+	}
+
+    // const char *title {"01 - Hello Triangle"};
+    // const char* GetTitle() {return title;};
 };
