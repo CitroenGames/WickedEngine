@@ -241,14 +241,22 @@ void SampleRenderPath::FixedUpdate()
 	// }
 }
 
+static float updateAccumulator = 0.0f;
+const float UPDATE_INTERVAL = 1.0f / 30.0f; // Update at 30 FPS instead of every frame
+
 void SampleRenderPath::Update(float dt)
 {
 	simulation::simulate(dt);
 
-	for (auto &object : gPhysicsScene.objects)
+	updateAccumulator += dt;
+	if (updateAccumulator >= UPDATE_INTERVAL)
 	{
-		auto meshComponent = wi::scene::GetScene().meshes.GetComponent(object->entity);
-		simulation::update_mesh(*object->softBody, *meshComponent, true);
+		updateAccumulator = 0.0f;
+		for (auto& object : gPhysicsScene.objects)
+		{
+			auto meshComponent = wi::scene::GetScene().meshes.GetComponent(object->entity);
+			simulation::update_mesh(*object->softBody, *meshComponent, true);
+		}
 	}
 
     // --- GRAB LOGIC ---

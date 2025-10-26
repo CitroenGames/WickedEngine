@@ -18,6 +18,8 @@ endif()
 
 setup_wicked_app(${PROJECT_NAME})
 
+target_precompile_headers(${PROJECT_NAME} PRIVATE src/stdafx.h)
+
 # Copy Content directory to build output
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

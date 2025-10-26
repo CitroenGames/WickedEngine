@@ -30,21 +30,22 @@ namespace simulation
 		if (gPhysicsScene.paused)
 			return;
 
-		// float subdt = dt / float(gPhysicsScene.numSubsteps); // Variable timestep not recommended
-		float subdt = gPhysicsScene.dt / float(gPhysicsScene.numSubsteps);
+		// Adaptive substeps based on object count
+		int substeps = gPhysicsScene.numSubsteps;
+		if (gPhysicsScene.objects.size() > 10)
+			substeps = std::max(5, substeps / 2);
 
-		for (int step = 0; step < gPhysicsScene.numSubsteps; ++step)
+		float subdt = gPhysicsScene.dt / float(substeps);
+
+		for (int step = 0; step < substeps; ++step)
 		{
-			// 1. PreSolve: explicit integration
-			for (auto &instance : gPhysicsScene.objects)
+			for (auto& instance : gPhysicsScene.objects)
 				instance->softBody->PreSolve(subdt, gPhysicsScene.gravity);
 
-			// 2. Solve: constraints (edge, volume, etc.)
-			for (auto &instance : gPhysicsScene.objects)
+			for (auto& instance : gPhysicsScene.objects)
 				instance->softBody->Solve(subdt);
 
-			// 3. PostSolve: update velocity
-			for (auto &instance : gPhysicsScene.objects)
+			for (auto& instance : gPhysicsScene.objects)
 				instance->softBody->PostSolve(subdt);
 		}
 	}
@@ -77,57 +78,117 @@ namespace simulation
 		label_tets.SetText(text);
 	}
 
-	void update_mesh(const SoftBody &softBody,
-					wi::scene::MeshComponent &mesh,
-					bool updateGPUBuffer)
+	void update_mesh(const SoftBody& softBody,
+		wi::scene::MeshComponent& mesh,
+		bool updateGPUBuffer)
 	{
-		// Update the vertex positions of the mesh triangle by triangle
+		// Update vertex positions triangle by triangle
 		size_t numTris = bunnyMesh.tetSurfaceTriIds.size() / 3;
+
+		// Pre-allocate temporary storage for vertex normals
+		static std::vector<XMFLOAT3> vertexNormals;
+		static std::vector<int> normalCounts;
+
+		if (vertexNormals.size() != softBody.numVerts)
+		{
+			vertexNormals.resize(softBody.numVerts, XMFLOAT3(0, 0, 0));
+			normalCounts.resize(softBody.numVerts, 0);
+		}
+
+		// Reset normals
+		std::fill(vertexNormals.begin(), vertexNormals.end(), XMFLOAT3(0, 0, 0));
+		std::fill(normalCounts.begin(), normalCounts.end(), 0);
+
+		// First pass: update positions and accumulate normals
 		for (size_t t = 0; t < numTris; ++t)
 		{
-			// Indices of the vertices for this triangle
 			uint32_t i0 = bunnyMesh.tetSurfaceTriIds[t * 3 + 0];
 			uint32_t i1 = bunnyMesh.tetSurfaceTriIds[t * 3 + 1];
 			uint32_t i2 = bunnyMesh.tetSurfaceTriIds[t * 3 + 2];
 
-			// New positions from physics simulation
-			XMFLOAT3 p0 = softBody.pos[i0];
-			XMFLOAT3 p1 = softBody.pos[i1];
-			XMFLOAT3 p2 = softBody.pos[i2];
+			// Get positions from soft body
+			const XMFLOAT3& p0 = softBody.pos[i0];
+			const XMFLOAT3& p1 = softBody.pos[i1];
+			const XMFLOAT3& p2 = softBody.pos[i2];
 
-			// Compute the new triangle normal
+			// Compute triangle normal
 			XMVECTOR v0 = XMLoadFloat3(&p0);
 			XMVECTOR v1 = XMLoadFloat3(&p1);
 			XMVECTOR v2 = XMLoadFloat3(&p2);
-			XMVECTOR n = XMVector3Cross(v2 - v0, v1 - v0);
-			n = XMVector3Normalize(n);
+			XMVECTOR n = XMVector3Normalize(XMVector3Cross(v2 - v0, v1 - v0));
 
 			XMFLOAT3 fn;
 			XMStoreFloat3(&fn, n);
 
-			// Update vertex positions
+			// Update mesh positions
 			size_t baseIndex = t * 3;
 			mesh.vertex_positions[baseIndex + 0] = p0;
 			mesh.vertex_positions[baseIndex + 1] = p1;
 			mesh.vertex_positions[baseIndex + 2] = p2;
 
-			// Update vertex normals
-			// In flat shading, the three vertices of each triangle share the same normal
-			mesh.vertex_normals[baseIndex + 0] = fn;
-			mesh.vertex_normals[baseIndex + 1] = fn;
-			mesh.vertex_normals[baseIndex + 2] = fn;
+			// Accumulate normals for averaging (smooth shading)
+			// For flat shading, just use fn directly
+			XMVECTOR vn0 = XMLoadFloat3(&vertexNormals[i0]);
+			XMVECTOR vn1 = XMLoadFloat3(&vertexNormals[i1]);
+			XMVECTOR vn2 = XMLoadFloat3(&vertexNormals[i2]);
+
+			XMStoreFloat3(&vertexNormals[i0], XMVectorAdd(vn0, n));
+			XMStoreFloat3(&vertexNormals[i1], XMVectorAdd(vn1, n));
+			XMStoreFloat3(&vertexNormals[i2], XMVectorAdd(vn2, n));
+
+			normalCounts[i0]++;
+			normalCounts[i1]++;
+			normalCounts[i2]++;
+
+			// For flat shading (original behavior), uncomment:
+			// mesh.vertex_normals[baseIndex + 0] = fn;
+			// mesh.vertex_normals[baseIndex + 1] = fn;
+			// mesh.vertex_normals[baseIndex + 2] = fn;
 		}
 
-		// Update AABB of the mesh
+		// Second pass: normalize and assign averaged normals
+		for (size_t t = 0; t < numTris; ++t)
+		{
+			uint32_t i0 = bunnyMesh.tetSurfaceTriIds[t * 3 + 0];
+			uint32_t i1 = bunnyMesh.tetSurfaceTriIds[t * 3 + 1];
+			uint32_t i2 = bunnyMesh.tetSurfaceTriIds[t * 3 + 2];
+
+			size_t baseIndex = t * 3;
+
+			// Normalize accumulated normals
+			if (normalCounts[i0] > 0)
+			{
+				XMVECTOR n = XMLoadFloat3(&vertexNormals[i0]);
+				n = XMVector3Normalize(n);
+				XMStoreFloat3(&mesh.vertex_normals[baseIndex + 0], n);
+			}
+
+			if (normalCounts[i1] > 0)
+			{
+				XMVECTOR n = XMLoadFloat3(&vertexNormals[i1]);
+				n = XMVector3Normalize(n);
+				XMStoreFloat3(&mesh.vertex_normals[baseIndex + 1], n);
+			}
+
+			if (normalCounts[i2] > 0)
+			{
+				XMVECTOR n = XMLoadFloat3(&vertexNormals[i2]);
+				n = XMVector3Normalize(n);
+				XMStoreFloat3(&mesh.vertex_normals[baseIndex + 2], n);
+			}
+		}
+
+		// Update AABB
 		XMFLOAT3 _min = XMFLOAT3(std::numeric_limits<float>::max(),
-								std::numeric_limits<float>::max(),
-								std::numeric_limits<float>::max());
+			std::numeric_limits<float>::max(),
+			std::numeric_limits<float>::max());
 		XMFLOAT3 _max = XMFLOAT3(std::numeric_limits<float>::lowest(),
-								std::numeric_limits<float>::lowest(),
-								std::numeric_limits<float>::lowest());
+			std::numeric_limits<float>::lowest(),
+			std::numeric_limits<float>::lowest());
+
 		for (size_t i = 0; i < mesh.vertex_positions.size(); ++i)
 		{
-			const XMFLOAT3 &pos = mesh.vertex_positions[i];
+			const XMFLOAT3& pos = mesh.vertex_positions[i];
 			_min = wi::math::Min(_min, pos);
 			_max = wi::math::Max(_max, pos);
 		}
@@ -136,54 +197,50 @@ namespace simulation
 		if (!updateGPUBuffer)
 			return;
 
-		// Update the GPU buffer where are the vertex positions and normals of the mesh
+		// GPU buffer update (expensive!)
 		auto device = wi::graphics::GetDevice();
 		auto cmd = device->BeginCommandList();
+
 		if (mesh.position_format == wi::scene::MeshComponent::Vertex_POS16::FORMAT)
 		{
 			std::vector<wi::scene::MeshComponent::Vertex_POS16> pos16;
 			pos16.reserve(mesh.vertex_positions.size());
+
 			for (size_t i = 0; i < mesh.vertex_positions.size(); ++i)
 			{
 				wi::scene::MeshComponent::Vertex_POS16 vert;
-				const XMFLOAT3 &pos = mesh.vertex_positions[i];
-				uint8_t wind = 0xFF;
-				vert.FromFULL(mesh.aabb, pos, wind);
+				vert.FromFULL(mesh.aabb, mesh.vertex_positions[i], 0xFF);
 				pos16.push_back(vert);
 			}
 
 			device->UpdateBuffer(&mesh.generalBuffer,
-								pos16.data(),
-								cmd,
-								mesh.vb_pos_wind.size, // pos16.size() * sizeof(wi::scene::MeshComponent::Vertex_POS16),
-								mesh.vb_pos_wind.offset);
+				pos16.data(),
+				cmd,
+				mesh.vb_pos_wind.size,
+				mesh.vb_pos_wind.offset);
 		}
 		else if (mesh.position_format == wi::scene::MeshComponent::Vertex_POS32::FORMAT)
 		{
 			std::vector<wi::scene::MeshComponent::Vertex_POS32> pos32;
 			pos32.reserve(mesh.vertex_positions.size());
+
 			for (size_t i = 0; i < mesh.vertex_positions.size(); ++i)
 			{
 				wi::scene::MeshComponent::Vertex_POS32 vert;
-				const XMFLOAT3 &pos = mesh.vertex_positions[i];
-				uint8_t wind = 0xFF;
-				vert.FromFULL(pos);
+				vert.FromFULL(mesh.vertex_positions[i]);
 				pos32.push_back(vert);
 			}
 
 			device->UpdateBuffer(&mesh.generalBuffer,
-								pos32.data(),
-								cmd,
-								mesh.vb_pos_wind.size, // pos32.size() * sizeof(wi::scene::MeshComponent::Vertex_POS32),
-								mesh.vb_pos_wind.offset);
-		}
-		else
-		{
-			assert("Unsupported vertex format!" && false);
+				pos32.data(),
+				cmd,
+				mesh.vb_pos_wind.size,
+				mesh.vb_pos_wind.offset);
 		}
 
 		std::vector<wi::scene::MeshComponent::Vertex_NOR> nor32;
 		nor32.reserve(mesh.vertex_normals.size());
+
 		for (size_t i = 0; i < mesh.vertex_normals.size(); ++i)
 		{
 			wi::scene::MeshComponent::Vertex_NOR vert;
@@ -192,10 +249,10 @@ namespace simulation
 		}
 
 		device->UpdateBuffer(&mesh.generalBuffer,
-							nor32.data(),
-							cmd,
-							mesh.vb_nor.size,
-							mesh.vb_nor.offset);
+			nor32.data(),
+			cmd,
+			mesh.vb_nor.size,
+			mesh.vb_nor.offset);
 	}
 
 std::unique_ptr<SoftBodyInstance> create_softbody_instance(const SoftBodyParams &params)
@@ -313,11 +370,8 @@ std::unique_ptr<SoftBodyInstance> create_softbody_instance(const SoftBodyParams 
 		using namespace wi::scene;
 		using namespace wi::ecs;
 
-		if (mat_entity != INVALID_ENTITY)
-		{	
-			GetScene().materials.Remove(mat_entity);
-			mat_entity = INVALID_ENTITY;
-		}
+		// DON'T remove the shared material - it's used by all instances!
+		// Only remove it when ALL instances are destroyed
 
 		GetScene().layers.Remove(sbi.entity);
 		GetScene().transforms.Remove(sbi.entity);

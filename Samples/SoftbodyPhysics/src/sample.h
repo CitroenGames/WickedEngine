@@ -1,8 +1,5 @@
 #pragma once
 
-// #include "wiRenderPath3D.h"
-// #include "WickedEngine.h"
-
 class SampleRenderPath : public wi::RenderPath3D
 {
 public:
