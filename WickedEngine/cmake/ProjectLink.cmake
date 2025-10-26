@@ -24,6 +24,23 @@ macro(setup_wicked_app PROJECT_NAME)
     )
 
     if(WIN32 AND MSVC)
-        add_compile_options(/MP)
+        # Enable multi-processor compilation
+        target_compile_options(${PROJECT_NAME} PRIVATE /MP)
+        
+        # Set optimization flags for Release builds
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Release>:/O2>        # Maximum optimization
+            $<$<CONFIG:Release>:/Ob2>       # Inline function expansion
+            $<$<CONFIG:Release>:/Oi>        # Enable intrinsic functions
+            $<$<CONFIG:Release>:/Ot>        # Favor fast code
+            $<$<CONFIG:Release>:/GL>        # Whole program optimization
+        )
+        
+        # Set linker flags for Release builds
+        target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Release>:/LTCG>      # Link-time code generation
+            $<$<CONFIG:Release>:/OPT:REF>   # Remove unreferenced functions/data
+            $<$<CONFIG:Release>:/OPT:ICF>   # Identical COMDAT folding
+        )
     endif()
 endmacro()
