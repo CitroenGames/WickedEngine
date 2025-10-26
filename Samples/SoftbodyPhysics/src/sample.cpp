@@ -242,7 +242,7 @@ void SampleRenderPath::FixedUpdate()
 }
 
 static float updateAccumulator = 0.0f;
-const float UPDATE_INTERVAL = 1.0f / 30.0f; // Update at 30 FPS instead of every frame
+const float UPDATE_INTERVAL = 1.0f / 60.0f; // Update at 60 hz
 
 void SampleRenderPath::Update(float dt)
 {
