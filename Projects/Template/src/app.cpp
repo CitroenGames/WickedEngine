@@ -1,121 +1,270 @@
 #include "app.h"
 #include <wiECS.h>
 #include <wiScene_Components.h>
+#include <iostream>
+#include <wiGUI.h>
 
-static wi::ecs::Entity trientity;
+void SampleApp::Initialize()
+{
+	wi::Application::Initialize();
+	render.Load();
+
+	ActivatePath(&render);
+}
+
+// scene and renderer stuff
+
+wi::gui::Label label_test;
+
+#define CAMERAMOVESPEED 10.0f
+static float camera_pos[3] = { 0.0f, 1.0f, -3.0f };
+static float camera_ang[3] = { 8.0f, 0.0f, 0.0f };
+wi::scene::TransformComponent camera_transform;
+
+static bool mouse_down = false;
+
+void init_sample_scene() // you can load .wiscene file instead of doing it like this
+{
+	wi::scene::Scene& scene = wi::scene::GetScene();
+
+	// Ambient light
+	auto& weather = scene.weathers.Create(wi::ecs::CreateEntity());
+	weather.ambient = XMFLOAT3(0.313f, 0.313f, 0.313f);
+
+	// SpotLight
+	{
+		auto lightEntity = scene.Entity_CreateLight("SpotLight", XMFLOAT3(2, 2, -2));
+		auto& light = *scene.lights.GetComponent(lightEntity);
+		light.SetType(wi::scene::LightComponent::LightType::SPOT);
+		light.intensity = 20.0f;
+		light.SetCastShadow(true);
+		light.SetVisualizerEnabled(true);
+
+		wi::scene::TransformComponent& transform = *scene.transforms.GetComponent(lightEntity);
+		// -70 degree to radians:
+		// -70 × (π / 180) ≈ -1,22173
+		// -40 degree to radians:
+		// -40 × (π / 180) ≈ -0,69813
+		// I will round them to -1.2 and -0.7
+		transform.RotateRollPitchYaw(XMFLOAT3(-1.2f, -0.7f, 0.0f));
+		transform.UpdateTransform();
+	}
+
+	// Directional Light
+	{
+		auto lightEntity = scene.Entity_CreateLight("DirLight", XMFLOAT3(0, 3, 0));
+		auto& light = *scene.lights.GetComponent(lightEntity);
+		light.SetType(wi::scene::LightComponent::LightType::DIRECTIONAL);
+		light.intensity = 1.0f;
+		light.color = XMFLOAT3(0.333f, 0.314f, 0.353f);
+		light.SetCastShadow(true);
+		// light.SetVisualizerEnabled(true);
+	}
+
+	// Ground
+	{
+		auto groundEntity = scene.Entity_CreatePlane("ground_entity");
+		auto groundComponent = scene.transforms.GetComponent(groundEntity);
+		groundComponent->Scale(XMFLOAT3(10, 0, 10));
+	}
+
+	// Grid
+	{
+		wi::renderer::SetToDrawGridHelper(true);
+	}
+}
+
+wi::gui::Label label;
+wi::gui::Button run;
+void init_gui(SampleRenderPath& srp)
+{
+	wi::gui::GUI& gui = srp.GetGUI();
+
+	label.Create("Label1");
+	label.SetText("Ten Minute Physics: 10 - Soft Body Simulation");
+	label.font.params.h_align = wi::font::WIFALIGN_CENTER;
+	label.SetSize(XMFLOAT2(340, 20));
+	gui.AddWidget(&label);
+
+	static wi::gui::Label label2;
+	static wi::gui::Button restart;
+	static wi::gui::Button squash;
+	static wi::gui::Button newBody;
+	static wi::gui::Slider compliance;
+	static wi::gui::Slider direction;
+
+	run.Create("runButton");
+	run.SetText("Run Simulation");
+	run.SetSize(XMFLOAT2(200, 20));
+	run.SetPos(XMFLOAT2(90, 140));
+	run.OnClick(
+		[&](wi::gui::EventArgs args)
+		{
+		});
+	gui.AddWidget(&run);
+
+	restart.Create("restartButton");
+	restart.SetText("Restart Simulation");
+	restart.SetSize(XMFLOAT2(200, 20));
+	restart.SetPos(XMFLOAT2(90, 170));
+	restart.OnClick(
+		[&](wi::gui::EventArgs args)
+		{
+		});
+	gui.AddWidget(&restart);
+
+	squash.Create("squashButton");
+	squash.SetText("Squash");
+	squash.SetSize(XMFLOAT2(200, 20));
+	squash.SetPos(XMFLOAT2(90, 200));
+	squash.OnClick(
+		[&](wi::gui::EventArgs args)
+		{
+		});
+	gui.AddWidget(&squash);
+
+	newBody.Create("newBodyButton");
+	newBody.SetText("Add Soft Body");
+	newBody.SetSize(XMFLOAT2(200, 20));
+	newBody.SetPos(XMFLOAT2(90, 230));
+	newBody.OnClick(
+		[&](wi::gui::EventArgs args)
+		{
+		});
+	gui.AddWidget(&newBody);
+
+	compliance.Create(0, 100, 20, 100, "slider1");
+	compliance.SetText("Compliance: ");
+	compliance.SetSize(XMFLOAT2(200, 20));
+	compliance.SetPos(XMFLOAT2(90, 260));
+	compliance.OnSlide(
+		[](wi::gui::EventArgs args)
+		{
+			
+		});
+	gui.AddWidget(&compliance);
+
+	label_test.Create("Label3");
+	label_test.font.params.h_align = wi::font::WIFALIGN_CENTER;
+	label_test.SetSize(XMFLOAT2(200, 20));
+	label_test.SetPos(XMFLOAT2(90, 290));
+	label_test.SetColor(wi::Color(0, 120, 0));
+	gui.AddWidget(&label_test);
+
+	label2.Create("Label2");
+	label2.SetText("WASD - Move Camera\n"
+		"[R]Mouse - Rotate Camera\n"
+		"[L]Mouse - Pick Object");
+	label2.font.params.h_align = wi::font::WIFALIGN_CENTER;
+	label2.SetSize(XMFLOAT2(200, 60));
+	label2.SetPos(XMFLOAT2(90, 320));
+	gui.AddWidget(&label2);
+}
+
 
 void SampleRenderPath::Load()
 {
-	using namespace wi::scene;
-	using namespace wi::ecs;
+	init_sample_scene();
 
-	// In an Entity-Component-System (ECS) architecture, entities and components are fundamental concepts:
-	// 
-	// Entity:
-	// An entity is a general-purpose object that represents a unique identifier. It does not contain any data or behavior by itself.
-	// Instead, it acts as an identifier for components. Entities are often implemented as simple integer IDs.
-	// In the context of a game, an entity could represent a player, an enemy, a projectile, or any other object in the game world.
-	// 
-	// Component:
-	// A component is a modular piece of data that can be attached to an entity. Each component typically contains specific data
-	// related to a particular aspect of the entity, such as its position, velocity, health, or appearance. Usually, components
-	// do not contain behavior (methods) and are implemented as plain data structures (structs or classes with only data members).
-	// By attaching different combinations of components to entities, you can create complex behaviors and characteristics.
-	// However, components can contain methods that set or initialize their data, but these methods should not contain complex logic.
-	// 
-	// System:
-	// A system is responsible for processing entities that have a specific set of components. Systems contain the logic and behavior
-	// that operate on the data contained in components. For example, a physics system might update the positions of all entities
-	// that have both position and velocity components, while a rendering system might draw all entities that have a mesh component.
-	// 
-	// In summary, ECS is a design pattern that promotes separation of concerns by dividing data (components) and behavior (systems),
-	// with entities acting as unique identifiers that group related components together.
-	Scene& scene = GetScene();
-
-	// Create a material for the mesh:
-	// We specify that the material won't be affected by lighting (SHADERTYPE_UNLIT),
-	// and that it will use vertex colors (SetUseVertexColors(true)) to color the mesh.
-	Entity mat_entity = CreateEntity();
-	scene.materials.Create(mat_entity);
-	MaterialComponent &material = *scene.materials.GetComponent(mat_entity);
-	material.shaderType = wi::scene::MaterialComponent::SHADERTYPE_UNLIT;
-	material.SetUseVertexColors(true);
-
-	trientity = wi::ecs::CreateEntity();
-	scene.layers.Create(trientity);
-	scene.transforms.Create(trientity);
-	ObjectComponent &object = scene.objects.Create(trientity);
-
-    // We store the mesh entity in meshID for later access.
-    // Without this, there would be no way to determine which mesh an object is using,
-    // as the association between objects and meshes is only maintained by
-    // ComponentManager<ObjectComponent>, which is not directly accessible
-    // from an ObjectComponent instance.
-	auto &mesh = scene.meshes.Create(trientity);
-	object.meshID = trientity;
-
-	mesh.subsets.push_back(wi::scene::MeshComponent::MeshSubset());
-	mesh.subsets.back().materialID = mat_entity;
-	mesh.indices.resize(3);
-	mesh.subsets.back().indexOffset = 0;
-	mesh.subsets.back().indexCount = 3;
-	mesh.indices[0] = 0;
-	mesh.indices[1] = 2;
-	mesh.indices[2] = 1;
-	mesh.vertex_positions.resize(3);
-	mesh.vertex_positions[0] = XMFLOAT3(-1.0f, -0.5f, 0.0f);
-	mesh.vertex_positions[1] = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	mesh.vertex_positions[2] = XMFLOAT3(1.0f, -0.5f, 0.0f);
-	mesh.vertex_colors.resize(3);
-	mesh.vertex_colors[0] = wi::math::CompressColor(XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));  // rgba Red;
-	mesh.vertex_colors[1] = wi::math::CompressColor(XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));  // rgba Green;
-	mesh.vertex_colors[2] = wi::math::CompressColor(XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));  // rgba Blue;
-
-	// Create vertex and index buffers as aliasing resources in a single general buffer accessible by the GPU.
-	// Also create an SRV for each buffer type (indices, positions, colors, etc) in the general buffer
-	// and put them into a heap (bindless if slots are available in the shader-visible descriptor heap
-	// associated with the command list, otherwise put them into a local descriptor heap accessible
-	// through SingleDescriptor::allocationhandler; we can do it via the SingleDescriptor object
-	// created in CreateRenderData (specifically, in the CreateSubresource method called at the end of
-	// CreateRenderData) and stored as an element of the subresources_srv vector of the 
-	// Resource_DX12 represeting the general buffer resource).
-	mesh.CreateRenderData();
-
-	auto meshtrans = scene.transforms.GetComponent(trientity);
-	meshtrans->Translate(XMFLOAT3(0.0f, -0.2f, 2.0f));
-	meshtrans->Scale(XMFLOAT3(1, 1, 1));
-
-	// Here we call the base class Load method in case it has any additional setup to do.
-	RenderPath3D::Load();
+	wi::RenderPath3D::Load();
 }
 
 void SampleRenderPath::Update(float dt)
 {
-    using namespace wi::scene;
-    static float speed = 1.5f;
-    static float direction = 1.0f;
-    static float delta_x = 0.0f;
+	// --- CAMERA CONTROL ---
+	{
+		wi::scene::CameraComponent& camera = wi::scene::GetCamera();
+		// XMFLOAT4 currentMouse = wi::input::GetPointer();
+		static XMFLOAT4 originalMouse = XMFLOAT4(0, 0, 0, 0);
+		static bool camControlStart = true;
+		if (camControlStart)
+		{
+			originalMouse = wi::input::GetPointer();
+		}
 
-    TransformComponent* transform = GetScene().transforms.GetComponent(trientity);
+		if (wi::input::Down(wi::input::MOUSE_BUTTON_MIDDLE) ||
+			wi::input::Down(wi::input::MOUSE_BUTTON_RIGHT))
+		{
+			camControlStart = false;
+			// Mouse delta
+			float xDif = wi::input::GetMouseState().delta_position.x;
+			float yDif = wi::input::GetMouseState().delta_position.y;
+			// float xDif = currentMouse.x - originalMouse.x;
+			// float yDif = currentMouse.y - originalMouse.y;
+			xDif = 0.1f * xDif;
+			yDif = 0.1f * yDif;
+			wi::input::SetPointer(originalMouse);
+			wi::input::HidePointer(true);
+			camera_ang[0] += yDif;
+			camera_ang[1] += xDif;
 
-    if (transform != nullptr)
-    {
-        float pos_x = transform->GetPosition().x;
-        delta_x = speed * direction * dt;
+			if (camera_ang[0] < -89.999f)
+				camera_ang[0] = -89.999f;
 
-        if (pos_x > 1.25f)
-        {
-            direction = -1.0f;
-        }
-        else if (pos_x < -1.25f)
-        {
-            direction = 1.0f;
-        }
+			if (camera_ang[0] > 89.999f)
+				camera_ang[0] = 89.999f;
+		}
+		else
+		{
+			camControlStart = true;
+			wi::input::HidePointer(false);
+		}
 
-        transform->Translate(XMFLOAT3(delta_x, 0, 0));
-    }
+		float movespeed = CAMERAMOVESPEED;
+		if (wi::input::Down(wi::input::KEYBOARD_BUTTON_LSHIFT) ||
+			wi::input::Down(wi::input::KEYBOARD_BUTTON_RSHIFT))
+		{
+			movespeed *= 3.0f;
+		}
+		movespeed *= dt;
 
-	// Here we call the base class Update method in case it has any additional setup to do.
+		if (wi::input::Down((wi::input::BUTTON)'W') ||
+			wi::input::Down(wi::input::KEYBOARD_BUTTON_UP))
+		{
+			camera_pos[0] += movespeed * camera.At.x;
+			camera_pos[1] += movespeed * camera.At.y;
+			camera_pos[2] += movespeed * camera.At.z;
+		}
+		if (wi::input::Down((wi::input::BUTTON)'S') ||
+			wi::input::Down(wi::input::KEYBOARD_BUTTON_DOWN))
+		{
+			camera_pos[0] -= movespeed * camera.At.x;
+			camera_pos[1] -= movespeed * camera.At.y;
+			camera_pos[2] -= movespeed * camera.At.z;
+		}
+
+		XMFLOAT3 dir_right;
+		XMStoreFloat3(&dir_right, camera.GetRight());
+		if (wi::input::Down((wi::input::BUTTON)'D') ||
+			wi::input::Down(wi::input::KEYBOARD_BUTTON_RIGHT))
+		{
+			camera_pos[0] += movespeed * dir_right.x;
+			camera_pos[1] += movespeed * dir_right.y;
+			camera_pos[2] += movespeed * dir_right.z;
+		}
+		if (wi::input::Down((wi::input::BUTTON)'A') ||
+			wi::input::Down(wi::input::KEYBOARD_BUTTON_LEFT))
+		{
+			camera_pos[0] -= movespeed * dir_right.x;
+			camera_pos[1] -= movespeed * dir_right.y;
+			camera_pos[2] -= movespeed * dir_right.z;
+		}
+
+		camera_transform.ClearTransform();
+		camera_transform.Translate(
+			XMFLOAT3(camera_pos[0],
+				camera_pos[1],
+				camera_pos[2]));
+		camera_transform.RotateRollPitchYaw(
+			XMFLOAT3(wi::math::DegreesToRadians(camera_ang[0]),
+				wi::math::DegreesToRadians(camera_ang[1]),
+				wi::math::DegreesToRadians(camera_ang[2]))
+		);
+		camera_transform.UpdateTransform();
+		camera.TransformCamera(camera_transform);
+		camera.UpdateCamera();
+	}
+
     RenderPath3D::Update(dt);
 }
 

@@ -13,14 +13,5 @@ class SampleApp : public wi::Application
 {
 public:
     SampleRenderPath render;
-	void Initialize() override
-	{
-		wi::Application::Initialize();
-		render.Load();
-
-		ActivatePath(&render);
-	}
-
-    // const char *title {"01 - Hello Triangle"};
-    // const char* GetTitle() {return title;};
+	void Initialize() override;
 };
