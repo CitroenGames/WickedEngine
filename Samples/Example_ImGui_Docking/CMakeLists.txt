@@ -67,7 +67,6 @@ else()
 	add_library(${IMGUILIBNAME} OBJECT ${IMGUI_FILES})
 	find_package(SDL2 REQUIRED)
 	target_link_libraries(${IMGUILIBNAME} PRIVATE SDL2::SDL2)
-	add_executable(Example_ImGui_Docking ${SOURCE_FILES})
 
 	target_link_libraries(${PROJECT_NAME}
 		PUBLIC

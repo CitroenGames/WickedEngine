@@ -12,7 +12,7 @@ macro(setup_wicked_app PROJECT_NAME)
         set(COPY_OR_SYMLINK_DIR_CMD "symlink_directory")
     endif()
     # Link against WickedEngine
-    target_link_libraries(${PROJECT_NAME} WickedEngine)
+    target_link_libraries(${PROJECT_NAME} PUBLIC WickedEngine)
     
     # Copy dxcompiler DLL next to the executable
     add_custom_command(
