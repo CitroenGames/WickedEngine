@@ -67,10 +67,10 @@ else ()
     endif()
 endif()
 
-add_subdirectory(LUA)
+add_subdirectory(3rdparty)
 add_subdirectory(Utility)
 
-set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)
 include(${PHYSICS_REPO_ROOT}/Jolt/Jolt.cmake)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # Jolt triggers a bug in some GCC versions, so we need to disable the warning

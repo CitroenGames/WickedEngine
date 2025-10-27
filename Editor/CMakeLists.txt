@@ -11,7 +11,11 @@ list(FILTER SOURCE_FILES EXCLUDE REGEX ${SDIR}/stdafx.*)
 list(APPEND SOURCE_FILES main_${PLATFORM}.cpp)
 
 if(WIN32)
+    list(APPEND SOURCE_FILES
+		win32/Editor.rc
+	)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCE_FILES})
+    target_include_directories(${PROJECT_NAME} PRIVATE win32)
 else()
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 endif()

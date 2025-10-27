@@ -6,6 +6,8 @@ if (NOT WIN32)
 	find_package(Threads REQUIRED)
 endif ()
 
+set(IMGUILIBNAME IMGUI_DOCKING_LIB)
+
 set(SOURCE_FILES
 	Example_ImGui_Docking.cpp
 	Example_ImGui_Docking.h
@@ -50,21 +52,21 @@ if (WIN32)
 		ImGui/imgui_impl_win32.cpp
 		ImGui/imgui_impl_win32.h
 	)
-	add_library(Example_ImGui_Docking_Lib OBJECT ${IMGUI_FILES})
+	add_library(${IMGUILIBNAME} OBJECT ${IMGUI_FILES})
 
 	target_link_libraries(${PROJECT_NAME}
-		Example_ImGui_Docking_Lib
+		${IMGUILIBNAME}
 	)
-	
+
 else()
 
 	list(APPEND IMGUI_FILES
 		ImGui/imgui_impl_sdl.cpp
 		ImGui/imgui_impl_sdl.h
 	)
-	add_library(Example_ImGui_Docking_Lib OBJECT ${IMGUI_FILES})
+	add_library(${IMGUILIBNAME} OBJECT ${IMGUI_FILES})
 	find_package(SDL2 REQUIRED)
-	target_link_libraries(Example_ImGui_Docking_Lib PRIVATE SDL2::SDL2)
+	target_link_libraries(${IMGUILIBNAME} PRIVATE SDL2::SDL2)
 	add_executable(Example_ImGui_Docking ${SOURCE_FILES})
 
 	target_link_libraries(${PROJECT_NAME}
@@ -72,7 +74,7 @@ else()
 		Threads::Threads
 
 		PRIVATE
-		Example_ImGui_Docking_Lib
+		${IMGUILIBNAME}
 	)
 endif()
 
