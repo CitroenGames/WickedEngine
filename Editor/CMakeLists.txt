@@ -3,12 +3,12 @@ cmake_minimum_required(VERSION 3.19)
 project(Editor)
 
 # workaround for source dir containing regex meta characters
-string(REGEX REPLACE "([.+?*])" "\\\\\\1" SDIR "${CMAKE_CURRENT_SOURCE_DIR}")
+string(REGEX REPLACE "([.+?*])" "\\\\\\1" SDIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-file(GLOB SOURCE_FILES CONFIGURE_DEPENDS *.cpp)
+file(GLOB SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 list(FILTER SOURCE_FILES EXCLUDE REGEX ${SDIR}/main_.*)
 list(FILTER SOURCE_FILES EXCLUDE REGEX ${SDIR}/stdafx.*)
-list(APPEND SOURCE_FILES main_${PLATFORM}.cpp)
+list(APPEND SOURCE_FILES ${SDIR}/main_${PLATFORM}.cpp)
 
 if(WIN32)
     list(APPEND SOURCE_FILES
@@ -38,6 +38,10 @@ if (WIN32)
     )
 
     set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    if(MSVC)
+        set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Editor)
+    endif()
 else ()
     # needed for proper names in crash stacktrace
     set_target_properties(${PROJECT_NAME}
@@ -53,7 +57,7 @@ if(WICKED_USE_IPO)
     )
 endif()
 
-target_precompile_headers(Editor PRIVATE "stdafx.h")
+target_precompile_headers(Editor PRIVATE "src/stdafx.h")
 
 # Needed for terrain system
 add_dependencies(Editor Content)

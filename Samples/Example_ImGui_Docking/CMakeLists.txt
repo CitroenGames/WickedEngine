@@ -11,7 +11,7 @@ set(IMGUILIBNAME IMGUI_DOCKING_LIB)
 set(SOURCE_FILES
 	Example_ImGui_Docking.cpp
 	Example_ImGui_Docking.h
-	../../Editor/ModelImporter_GLTF.cpp
+	../../Editor/src/ModelImporter_GLTF.cpp
 )
 
 if(WIN32)
@@ -55,6 +55,7 @@ if (WIN32)
 	add_library(${IMGUILIBNAME} OBJECT ${IMGUI_FILES})
 
 	target_link_libraries(${PROJECT_NAME}
+		PRIVATE
 		${IMGUILIBNAME}
 	)
 

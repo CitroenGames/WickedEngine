@@ -85,8 +85,6 @@ if (WIN32)
             /MP
         )
 	endif()
-
-    # add_compile_definitions(_WIN32=1) this is a given from the compiler
 elseif(UNIX)
     set(PLATFORM "SDL2")
     add_compile_definitions(SDL2=1)

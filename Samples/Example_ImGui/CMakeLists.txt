@@ -55,7 +55,7 @@ if (WIN32)
 	add_library(${IMGUILIBNAME} OBJECT ${IMGUI_FILES})
 
 	target_link_libraries(${PROJECT_NAME}
-		${IMGUILIBNAME}
+		PRIVATE ${IMGUILIBNAME}
 	)
 
 else()
