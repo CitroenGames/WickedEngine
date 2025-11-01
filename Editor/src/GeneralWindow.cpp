@@ -26,7 +26,16 @@ void GeneralWindow::Create(EditorComponent* _editor)
 	wi::gui::Window::Create("General", wi::gui::Window::WindowControls::CLOSE | wi::gui::Window::WindowControls::RESIZE_RIGHT);
 	SetText("General Options " ICON_GENERALOPTIONS);
 
-	SetSize(XMFLOAT2(300, 740));
+	XMFLOAT2 size = XMFLOAT2(300, 740);
+	if (editor->main->config.GetSection("layout").Has("options.width"))
+	{
+		size.x = editor->main->config.GetSection("layout").GetFloat("options.width");
+	}
+	if (editor->main->config.GetSection("layout").Has("options.height"))
+	{
+		size.y = editor->main->config.GetSection("layout").GetFloat("options.height");
+	}
+	SetSize(size);
 
 	masterVolumeSlider.Create(0, 2, 1, 100, "Master Volume: ");
 	if (editor->main->config.GetSection("options").Has("volume"))
@@ -299,6 +308,19 @@ void GeneralWindow::Create(EditorComponent* _editor)
 		editor->main->config.Commit();
 	});
 	AddWidget(&saveCompressionCheckBox);
+
+	entityTreeSortingComboBox.Create("Entity Tree Sorting: ");
+	entityTreeSortingComboBox.AddItem("None", 0);
+	entityTreeSortingComboBox.AddItem("By name", 1);
+	entityTreeSortingComboBox.AddItem("By type", 2);
+	entityTreeSortingComboBox.SetTooltip("Choose how entities are sorted in the entity tree.\nNone: Unsorted\nBy name: Alphabetically sorted\nBy type: Grouped by component types");
+	entityTreeSortingComboBox.SetSelected(editor->main->config.GetSection("options").GetInt("entity_tree_sorting"));
+	entityTreeSortingComboBox.OnSelect([=](wi::gui::EventArgs args) {
+		editor->main->config.GetSection("options").Set("entity_tree_sorting", args.iValue);
+		editor->main->config.Commit();
+		editor->componentsWnd.RefreshEntityTree();
+	});
+	AddWidget(&entityTreeSortingComboBox);
 
 	outlineOpacitySlider.Create(0, 1, 1, 100, "Outline Opacity: ");
 	outlineOpacitySlider.SetTooltip("You can control the transparency of the selection outline");
@@ -642,7 +664,7 @@ void GeneralWindow::Create(EditorComponent* _editor)
 		editor->componentsWnd.newComponentCombo.SetAngularHighlightColor(highlight);
 		editor->projectCreatorWnd.createButton.SetAngularHighlightColor(highlight);
 		editor->themeEditorWnd.saveButton.SetAngularHighlightColor(highlight);
-		editor->componentsWnd.materialWnd.textureSlotButton.SetColor(wi::Color::White(), wi::gui::IDLE);
+		editor->componentsWnd.materialWnd.textureSlotImage.SetColor(wi::Color::White(), wi::gui::IDLE);
 		editor->componentsWnd.objectWnd.lightmapPreviewButton.SetColor(wi::Color::White());
 		for (auto& x : editor->componentsWnd.objectWnd.lightmapPreviewButton.sprites)
 		{
@@ -1452,6 +1474,9 @@ void GeneralWindow::ResizeLayout()
 {
 	wi::gui::Window::ResizeLayout();
 
+	editor->main->config.GetSection("layout").Set("options.width", GetSize().x);
+	editor->main->config.GetSection("layout").Set("options.height", GetSize().y);
+
 	layout.add_right(versionCheckBox, fpsCheckBox, otherinfoCheckBox);
 
 	layout.add(masterVolumeSlider);
@@ -1459,6 +1484,8 @@ void GeneralWindow::ResizeLayout()
 	layout.add(saveModeComboBox);
 
 	layout.add_right(saveCompressionCheckBox);
+
+	layout.add(entityTreeSortingComboBox);
 
 	layout.add(themeCombo);
 	themeEditorButton.SetPos(XMFLOAT2(themeCombo.GetPos().x - themeCombo.GetLeftTextWidth() - themeEditorButton.GetSize().x - layout.padding * 2, themeCombo.GetPos().y));
